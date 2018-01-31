@@ -63,6 +63,8 @@
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.button4 = new System.Windows.Forms.Button();
             this.TODTimer = new System.Windows.Forms.Timer(this.components);
+            this.button5 = new System.Windows.Forms.Button();
+            this.button6 = new System.Windows.Forms.Button();
             this.groupBox5.SuspendLayout();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
@@ -363,7 +365,7 @@
             // 
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(659, 907);
+            this.label1.Location = new System.Drawing.Point(660, 885);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(46, 17);
             this.label1.TabIndex = 176;
@@ -396,7 +398,7 @@
             // 
             // button4
             // 
-            this.button4.Location = new System.Drawing.Point(863, 910);
+            this.button4.Location = new System.Drawing.Point(663, 905);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(99, 36);
             this.button4.TabIndex = 179;
@@ -410,11 +412,33 @@
             this.TODTimer.Interval = 1000;
             this.TODTimer.Tick += new System.EventHandler(this.TODTimer_Tick);
             // 
+            // button5
+            // 
+            this.button5.Location = new System.Drawing.Point(1050, 907);
+            this.button5.Name = "button5";
+            this.button5.Size = new System.Drawing.Size(123, 41);
+            this.button5.TabIndex = 180;
+            this.button5.Text = "Disconnect";
+            this.button5.UseVisualStyleBackColor = true;
+            this.button5.Click += new System.EventHandler(this.button5_Click);
+            // 
+            // button6
+            // 
+            this.button6.Location = new System.Drawing.Point(828, 897);
+            this.button6.Name = "button6";
+            this.button6.Size = new System.Drawing.Size(109, 44);
+            this.button6.TabIndex = 181;
+            this.button6.Text = "Pause";
+            this.button6.UseVisualStyleBackColor = true;
+            this.button6.Click += new System.EventHandler(this.button6_Click);
+            // 
             // frmMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1223, 967);
+            this.Controls.Add(this.button6);
+            this.Controls.Add(this.button5);
             this.Controls.Add(this.button4);
             this.Controls.Add(this.listBox1);
             this.Controls.Add(this.button3);
@@ -479,6 +503,8 @@
         private System.Windows.Forms.Timer timer1;
         private System.Windows.Forms.Button button4;
         private System.Windows.Forms.Timer TODTimer;
+        private System.Windows.Forms.Button button5;
+        private System.Windows.Forms.Button button6;
     }
 }
 

@@ -80,6 +80,8 @@ namespace TDFInterface
         public static List<string> starredFields = new List<string>();
         public static List<fin_Data> financialResults = new List<fin_Data>();
         public static Int32[,] CatalogData = new int[150, 60];
+        public static Int16 numCat { get; set; }
+
         public static bool showAllFields { get; set; }
         public static List<string> Dow30symbols = new List<string>();
 

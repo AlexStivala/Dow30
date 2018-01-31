@@ -75,7 +75,7 @@ namespace AsyncClientSocket
             SendTimeout = Defaulttimeout;
             ConnectTimeout = Defaulttimeout;
             ReconnectInterval = Reconnectinterval;
-            _tmrReceiveTimeout.AutoReset = false;
+            _tmrReceiveTimeout.AutoReset = true;
             _tmrReceiveTimeout.Elapsed += tmrReceiveTimeout_Elapsed;
             _tmrConnectTimeout.AutoReset = false;
             _tmrConnectTimeout.Elapsed += tmrConnectTimeout_Elapsed;
@@ -165,7 +165,11 @@ namespace AsyncClientSocket
             try
             {
                 if (ConnectionState != ConnectionStatus.Connected)
-                    return;
+                    
+                return;
+
+                _tmrReceiveTimeout.Stop();
+
                 _client.Client.BeginDisconnect(true, CbDisconnectComplete, _client.Client);
             }
             catch (Exception ex)

@@ -746,7 +746,7 @@ namespace TDFInterface
             List<string> s = new List<string>();
             UInt16 endian = BitConverter.ToUInt16(catalog, 0);
             UInt16 numPatterns = ReverseBytes2(BitConverter.ToUInt16(catalog, 2));
-            //numCat = (short)numPatterns;
+            TDFGlobals.numCat = (short)numPatterns;
             UInt16 patternNum = 0;
             UInt16 numFIDS = 0;
             int index = 4;
