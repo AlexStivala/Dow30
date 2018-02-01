@@ -88,6 +88,7 @@ namespace TDFDow30
         public pageData marketPage = new pageData();
         public Stopwatch sw;
         public string dbConn = "";
+        public string dbTableName = "";
         public string symbolListStr = "";
         public DateTime connectTime;
         public DateTime disconnectTime;
@@ -212,12 +213,16 @@ namespace TDFDow30
                 Port = Properties.Settings.Default.TDF_Port;
                 UserName = Properties.Settings.Default.TDF_UserName;
                 PW = Properties.Settings.Default.TDF_PW;
+
                 dbConn = Properties.Settings.Default.dbConn;
+                dbTableName = Properties.Settings.Default.dbTableName;
+
+
                 disconnectTime = DateTime.Today + Properties.Settings.Default.Reset_Connection;
                 if (DateTime.Now > disconnectTime)
                     disconnectTime = disconnectTime.AddDays(1);
                 refTime = DateTime.Today.AddHours(1);
-
+                
                 
                 IPTextBox.Text = IPAddress;
                 PortTextBox.Text = Port;
@@ -267,23 +272,30 @@ namespace TDFDow30
                 TDFGlobals.starredFields.Add("sectyType"); // 29
                 TDFGlobals.starredFields.Add("symbol"); // 30
 
+
+                // Log application start
+                log.Info("*********** Starting TDFDow30 **********");
+
+
+
                 //XMLDataUpdated += new EventHandler<XMLUpdateEventArgs>(DisplayXMLData);
-                SymbolDataUpdated += new EventHandler<SymbolUpdateEventArgs>(SymbolDataUpdated);
+                //SymbolDataUpdated += new EventHandler<SymbolUpdateEventArgs>(SymbolDataUpdated);
                 //ChartDataUpdated += new EventHandler<ChartLiveUpdateEventArgs>(ChartDataUpdated);
                 //ChartClosed += new EventHandler<ChartClosedEventArgs>(ChartClosed);
 
                 TDFProcessingFunctions TDFproc = new TDFProcessingFunctions();
                 TDFproc.sendBuf += new SendBuf(TRSendCommand);
+                TODTimer.Enabled = true;
 
-                // Log application start
-                log.Info("Starting Thomson Reuters Data Test Utility");
+                
             }
             catch (Exception ex)
             {
                 // Log error
                 log.Error("frmMain Exception occurred during main form load: " + ex.Message);
-                log.Debug("frmMain Exception occurred during main form load", ex);
+                //log.Debug("frmMain Exception occurred during main form load", ex);
             }
+            TODTimer.Enabled = true;
         }
 
 
@@ -298,6 +310,9 @@ namespace TDFDow30
             // Build Logon Message
             string queryStr = "LOGON USERNAME" + "=\"" + UserTextBox.Text + "\" PASSWORD=\"" +
                 PWTextBox.Text + "\"";
+
+
+            
 
             // Instantiate and setup the client sockets
             // Establish the remote endpoints for the sockets
@@ -350,7 +365,43 @@ namespace TDFDow30
             label6.Text = "Number of Fields: " + cnt.ToString();
             label7.Text = "Num Catalogs: " + TDFGlobals.numCat.ToString();
 
+            
+            // get data from db table to get symbol list
+            string connection = $"SELECT * FROM {dbTableName}";
+            Dow30Data = Dow30Database.Dow30DB.GetSymbolDataCollection(connection, dbConn);
+            dataGridView1.DataSource = Dow30Data;
+
+            // create symbol list and set up symbols collection
+            bool first = true;
+            symbolListStr = "";
+            foreach (Dow30Database.Dow30DB.Dow30symbolData sd in Dow30Data)
+            {
+                TDFGlobals.Dow30symbols.Add(sd.SubscribeSymbol);
+                if (first == false)
+                {
+                    symbolListStr += ", " + sd.SubscribeSymbol;
+                }
+                else
+                {
+                    symbolListStr += sd.SubscribeSymbol;
+                    first = false;
+                }
+
+                symbolData sd1 = new symbolData();
+                sd1.queryType = (int)TDFInterface.Globals.Portfolio_Mgr;
+                sd1.queryStr = "";
+                sd1.symbol = sd.SubscribeSymbol;
+                sd1.seqId = 5;
+                sd1.updated = DateTime.Now;
+                TDFGlobals.symbols.Add(sd1);
+            }
+            //label1.Text = symbolListStr;
+
+            // start data collection
+            timer1.Enabled = true;
+            
         }
+    
 
         /*
         public void GetCataloger()
@@ -626,14 +677,12 @@ namespace TDFDow30
                 // Send the data; terminiate with CRLF
                 TRClientSocket.Send(outbuf);
 
-                // Log if debug mode
-                log.Debug("Command sent to TR: " + outbuf);
+                
             }
             catch (Exception ex)
             {
                 // Log error
                 log.Error("Error occurred while trying to send data to TR client port: " + ex.Message);
-                log.Debug("Error occurred while trying to send data to TR client port", ex);
             }
         }
         #endregion;
@@ -645,7 +694,7 @@ namespace TDFDow30
 
         private void button1_Click(object sender, EventArgs e)
         {
-            string connection = "SELECT * FROM X20FinancialDataDev";
+            string connection = $"SELECT * FROM {dbTableName}";
             Dow30Data = Dow30Database.Dow30DB.GetSymbolDataCollection(connection, dbConn);
             dataGridView1.DataSource = Dow30Data;
         }
@@ -731,16 +780,38 @@ namespace TDFDow30
                     }
 
                     DisplayResults(TDFGlobals.financialResults, i);
-                    TDFProcessingFunctions.SetSymbolData(TDFGlobals.financialResults, i, symbolIndex);
+                    if (TDFGlobals.financialResults.Count > 0)
+                        TDFProcessingFunctions.SetSymbolData(TDFGlobals.financialResults, i, symbolIndex);
 
                 }
                 TDFGlobals.financialResults.Clear();
 
                 UpdateAllSymbols();
 
-                string connection = "SELECT * FROM X20FinancialDataDev";
+                string connection = $"SELECT * FROM {dbTableName}";
                 Dow30Data = Dow30Database.Dow30DB.GetSymbolDataCollection(connection, dbConn);
                 dataGridView1.DataSource = Dow30Data;
+                dataGridView1.ClearSelection();
+
+                foreach (DataGridViewRow row in dataGridView1.Rows)
+                {
+                    if (Convert.ToSingle(row.Cells[5].Value) < 0)
+                    {
+                        row.DefaultCellStyle.BackColor = Color.Red;
+                        row.DefaultCellStyle.ForeColor = Color.Black;
+                    }
+                    else if (Convert.ToSingle(row.Cells[5].Value) > 0)
+                    {
+                        row.DefaultCellStyle.BackColor = Color.Green;
+                        row.DefaultCellStyle.ForeColor = Color.White;
+                    }
+                    else
+                    {
+                        row.DefaultCellStyle.BackColor = Color.White;
+                        row.DefaultCellStyle.ForeColor = Color.Black;
+                    }
+
+                }
 
                 label1.Text = $"Elapsed: {ts.TotalMilliseconds.ToString()} msec";
             }
@@ -818,7 +889,8 @@ namespace TDFDow30
             {
                 symbolData sd = new symbolData();
                 sd = TDFGlobals.symbols[i];
-                UpdateDB(sd);
+                if (Dow30Data[i].Last != sd.trdPrc)
+                    UpdateDB(sd);
             }
         }
 
@@ -882,22 +954,26 @@ namespace TDFDow30
             catch (Exception ex)
             {
                 log.Error("UpdateData- SQL Connection Exception occurred: " + ex.Message);
-                log.Debug("UpdateData- SQL Connection Exception occurred", ex);
+                
             }
             
         }
         public void SendEmail()
         {
-            MailMessage mail = new MailMessage("FoxGfxEngAppAlert@foxnews.com", "alex.stivala@foxnews.com");
+            MailMessage mail = new MailMessage("TDFDow30App@foxnews.com", "mike.dilworth@foxnews.com");
+            //MailMessage mail = new MailMessage("TDFDow30App@foxnews.com", "alex.stivala@foxnews.com");
 
             SmtpClient mailClient = new SmtpClient();
             mailClient.Port = 25;
             mailClient.DeliveryMethod = SmtpDeliveryMethod.Network;
             mailClient.UseDefaultCredentials = true;
             mailClient.Host = "10.232.16.121";
-            mail.Subject = "Test";
+            mail.Subject = "Status Update";
             //mail.Body = "[" + DateTime.Now + "] " + Environment.NewLine + "The data monitor application has encountered a error" + Environment.NewLine + e.ToString();
-            mail.Body = "[" + DateTime.Now + "] " + Environment.NewLine + "This is a test message!" + Environment.NewLine;
+            //mail.Body = "[" + DateTime.Now + "] " + Environment.NewLine + "This is a test message!" + Environment.NewLine;
+            mail.Body = "This is a greeting from the TDFDow30 application - just saying hello." + Environment.NewLine +
+                "No need to worry, no Fatal Exception Errors, no Warnings, just running smooooooth." + Environment.NewLine +
+                "Almost could be a Corona commercial.";
             mailClient.Send(mail);
         }
 
@@ -962,16 +1038,21 @@ namespace TDFDow30
 
         public void ResetTDFConnection()
         {
+            log.Debug("Resetting TDF Connection");
             resetting = true;
             timer1.Enabled = false;
             DisconnectFromTDF();
             Thread.Sleep(1000);
+            TDFGlobals.symbols.Clear();
+            TDFGlobals.financialResults.Clear();
             ConnectToTDF();
             resetting = false;
             resetComplete = true;
             disconnectTime = disconnectTime.AddDays(1);
             refTime = refTime.AddDays(1);
-            //timer1.Enabled = true;
+            timer1.Enabled = true;
+            log.Debug("Reset complete");
+
         }
 
         private void gbTime_Enter(object sender, EventArgs e)

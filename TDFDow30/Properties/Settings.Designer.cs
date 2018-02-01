@@ -83,10 +83,19 @@ namespace TDFDow30.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("09:45:00")]
+        [global::System.Configuration.DefaultSettingValueAttribute("04:45:00")]
         public global::System.TimeSpan Reset_Connection {
             get {
                 return ((global::System.TimeSpan)(this["Reset_Connection"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("X20FinancialDataDev")]
+        public string dbTableName {
+            get {
+                return ((string)(this["dbTableName"]));
             }
         }
     }

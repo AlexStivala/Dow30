@@ -445,7 +445,7 @@ namespace AsyncClientSocket
         private readonly IPAddress _ip;
         private ConnectionStatus _conStat;
         private readonly TcpClient _client;
-        private readonly byte[] _dataBuffer = new byte[500000];
+        private readonly byte[] _dataBuffer = new byte[200000];
         //private readonly byte[] _dataBuffer = new byte[5000];
         //private readonly List<byte> _dataBuffer = new List<byte>();
         private readonly int _port;
