@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace TDFInterface
 {
     using System.ComponentModel;
-    public enum Globals : int
+    public enum QueryTypes : int
     {
         [Description("Quotes")]
         Quotes = 0,

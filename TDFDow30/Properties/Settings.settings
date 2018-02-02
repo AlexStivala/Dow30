@@ -29,10 +29,16 @@
       <Value Profile="(Default)">Data Source=x2-sql-pri;Initial Catalog=X20Financial_TDF;Persist Security Info=True;User ID=sa;Password=Engineer@1</Value>
     </Setting>
     <Setting Name="Reset_Connection" Type="System.TimeSpan" Scope="Application">
-      <Value Profile="(Default)">04:45:00</Value>
+      <Value Profile="(Default)">03:45:00</Value>
     </Setting>
     <Setting Name="dbTableName" Type="System.String" Scope="Application">
       <Value Profile="(Default)">X20FinancialDataDev</Value>
+    </Setting>
+    <Setting Name="Dynamic" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="ZipperFilePath" Type="System.String" Scope="User">
+      <Value Profile="(Default)">c:\X\</Value>
     </Setting>
   </Settings>
 </SettingsFile>

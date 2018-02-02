@@ -60,6 +60,7 @@ namespace TDFDow30
         public string msgStr = "";
         public string XMLStr = "";
 
+        public string quot = "\"";
         public int rCnt = 0;
         public Int64 bytesReceived = 0;
         public bool moreData = false;
@@ -96,7 +97,10 @@ namespace TDFDow30
         public bool resetting = false;
         public bool resetComplete = false;
         public bool loggedIn = false;
+        public bool dynamic = false;
         public List<string> messages = new List<string>();
+        public string zipperFilePath;
+
 
 
         public class XMLUpdateEventArgs : EventArgs
@@ -216,6 +220,8 @@ namespace TDFDow30
 
                 dbConn = Properties.Settings.Default.dbConn;
                 dbTableName = Properties.Settings.Default.dbTableName;
+                dynamic = Properties.Settings.Default.Dynamic;
+                zipperFilePath = Properties.Settings.Default.ZipperFilePath;
 
 
                 disconnectTime = DateTime.Today + Properties.Settings.Default.Reset_Connection;
@@ -244,6 +250,7 @@ namespace TDFDow30
                 TDFGlobals.starredFields.Add("netChg"); // 1
                 TDFGlobals.starredFields.Add("ycls"); //2
                 TDFGlobals.starredFields.Add("pcntChg"); //3
+                /*
                 TDFGlobals.starredFields.Add("hi"); // 4
                 TDFGlobals.starredFields.Add("lo"); // 5
                 TDFGlobals.starredFields.Add("annHi"); // 6
@@ -271,7 +278,7 @@ namespace TDFDow30
                 TDFGlobals.starredFields.Add("companyShrsOutstanding"); // 28
                 TDFGlobals.starredFields.Add("sectyType"); // 29
                 TDFGlobals.starredFields.Add("symbol"); // 30
-
+                */
 
                 // Log application start
                 log.Info("*********** Starting TDFDow30 **********");
@@ -371,9 +378,12 @@ namespace TDFDow30
             Dow30Data = Dow30Database.Dow30DB.GetSymbolDataCollection(connection, dbConn);
             dataGridView1.DataSource = Dow30Data;
 
+            System.Threading.Thread.Sleep(1000);
+
             // create symbol list and set up symbols collection
             bool first = true;
             symbolListStr = "";
+            uint ui = 0;
             foreach (Dow30Database.Dow30DB.Dow30symbolData sd in Dow30Data)
             {
                 TDFGlobals.Dow30symbols.Add(sd.SubscribeSymbol);
@@ -388,12 +398,22 @@ namespace TDFDow30
                 }
 
                 symbolData sd1 = new symbolData();
-                sd1.queryType = (int)TDFInterface.Globals.Portfolio_Mgr;
+                if (dynamic)
+                    sd1.queryType = (int)QueryTypes.Dynamic_Quotes;
+                else
+                    sd1.queryType = (int)QueryTypes.Portfolio_Mgr;
                 sd1.queryStr = "";
                 sd1.symbol = sd.SubscribeSymbol;
                 sd1.seqId = 5;
                 sd1.updated = DateTime.Now;
                 TDFGlobals.symbols.Add(sd1);
+                if (dynamic)
+                {
+                    ui++;
+                    IssueDynamicSubscriptionQuery(sd.SubscribeSymbol, ui);
+                    Thread.Sleep(50);
+                }
+
             }
             //label1.Text = symbolListStr;
 
@@ -402,28 +422,22 @@ namespace TDFDow30
             
         }
     
-
-        /*
-        public void GetCataloger()
+        public void IssueDynamicSubscriptionQuery(string symbolStr, uint seq)
         {
-            // Build Logon Message
-            string queryStr = "SELECT * FROM CATALOGER_TABLE";
+            string fieldList = "trdPrc, netChg, pcntChg"; 
+            //string query = "SELECT " + fieldList + " FROM DYNAMIC_QUOTES WHERE usrSymbol= \"" + symbolStr + "\"";
+            string query = $"SELECT {fieldList} FROM DYNAMIC_QUOTES WHERE usrSymbol= {quot}{symbolStr}{quot}";
+            if (TRConnected)
+            {
+                ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
+                byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, query, TDFconstants.DATA_REQUEST, seq);
 
-            ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
-            byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, queryStr, TDFconstants.DATA_REQUEST, 99);
-            TRSendCommand(outputbuf);
+                TRSendCommand(outputbuf);
+                listBox1.Items.Add(query);
+
+            }
         }
-        public void GetFieldInfoTable()
-        {
-            // Build Logon Message
-            string queryStr = "SELECT * FROM FIELD_INFO_TABLE";
-
-            ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
-            byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, queryStr, TDFconstants.DATA_REQUEST, 98);
-            TRSendCommand(outputbuf);
-        }
-        */
-
+        
         #region Socket Handlers
         // Handler for data received back from TRclientsocket
         private void TRDataReceived(ClientSocket sender, byte[] data)
@@ -554,7 +568,7 @@ namespace TDFDow30
                                 break;
 
                             case TDFconstants.SUBSCRIPTION_RESPONSE:
-                                if (TRmessage.itf_Header.seqId == 101)
+                                //if (TRmessage.itf_Header.seqId == 101)
                                 {
                                     TDFproc.ProcessFinancialData(TRmessage);
                                     TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize + 1);
@@ -716,7 +730,7 @@ namespace TDFDow30
                 }
 
                 symbolData sd1 = new symbolData();
-                sd1.queryType = (int)TDFInterface.Globals.Portfolio_Mgr;
+                sd1.queryType = (int)QueryTypes.Portfolio_Mgr;
                 sd1.queryStr = "";
                 sd1.symbol = sd.SubscribeSymbol;
                 sd1.seqId = 5;
@@ -746,7 +760,7 @@ namespace TDFDow30
             stopWatch.Start();
             string fieldList = "trdPrc, netChg, pcntChg";
             string query = $"SELECT {fieldList} FROM PORTFOLIO_MGR WHERE usrSymbol IN ({symbolListStr})";
-            //if (TRConnected)
+            if (TRConnected)
             {
                 ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
                 byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, query, TDFconstants.DATA_REQUEST, 5);
@@ -761,8 +775,12 @@ namespace TDFDow30
             string sym = "";
             string oldSym = "";
 
-            GetDow30Data();
-            Thread.Sleep(50);
+            if (dynamic == false)
+            {
+                GetDow30Data();
+                Thread.Sleep(50);
+
+            }
 
             if (TDFGlobals.financialResults.Count > 0)
             {
@@ -774,12 +792,16 @@ namespace TDFDow30
                     if (sym != oldSym && sym != null)
                     {
                         s = TDFGlobals.financialResults[i].symbolFull;
-                        listBox1.Items.Add(" ");
+                        if (i == 0)
+                            listBox1.Items.Add("----------");
+                        if (dynamic == false)
+                            listBox1.Items.Add(" ");
                         listBox1.Items.Add(s);
                         oldSym = sym;
                     }
 
-                    DisplayResults(TDFGlobals.financialResults, i);
+                    if (dynamic == false)
+                        DisplayResults(TDFGlobals.financialResults, i);
                     if (TDFGlobals.financialResults.Count > 0)
                         TDFProcessingFunctions.SetSymbolData(TDFGlobals.financialResults, i, symbolIndex);
 
@@ -822,7 +844,7 @@ namespace TDFDow30
             string s = "";
             string tf = "";
 
-            //if (f[i].show && f[i].queryType != (int)(QueryTypes.Dynamic_Quotes))
+            if (f[i].show && f[i].queryType != (int)(QueryTypes.Dynamic_Quotes))
             {
                 switch (f[i].fieldDataType)
                 {
@@ -984,7 +1006,8 @@ namespace TDFDow30
 
         private void frmMain_FormClosing(object sender, FormClosingEventArgs e)
         {
-            //unSubscribeSymbol();
+            if (dynamic)
+                UnsubscribeAll();
             Logoff();
         }
         private void Logoff()
@@ -1041,6 +1064,9 @@ namespace TDFDow30
             log.Debug("Resetting TDF Connection");
             resetting = true;
             timer1.Enabled = false;
+            if (dynamic)
+                UnsubscribeAll();
+
             DisconnectFromTDF();
             Thread.Sleep(1000);
             TDFGlobals.symbols.Clear();
@@ -1054,6 +1080,23 @@ namespace TDFDow30
             log.Debug("Reset complete");
 
         }
+
+        public void UnsubscribeAll()
+        {
+            foreach (symbolData sd in TDFGlobals.symbols)
+            {
+                string sym = sd.symbolFull;
+                string queryStr = $"DELETE FROM SUBSCRIPTION_TABLE WHERE channelName = DYNAMIC_QUOTES AND usrSymbol = {quot}{sym}{quot}";
+                ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
+                byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, queryStr, TDFconstants.DATA_REQUEST, 1);
+                TRSendCommand(outputbuf);
+                listBox1.Items.Add(queryStr);
+                Thread.Sleep(50);
+                
+            }
+        }
+        
+    
 
         private void gbTime_Enter(object sender, EventArgs e)
         {
@@ -1073,6 +1116,33 @@ namespace TDFDow30
                 button6.Text = "Pause";
             else
                 button6.Text = "GO";
+        }
+        public void UpdateZipperDataFile()
+        {
+            XmlDocument xmlDoc = new XmlDocument();
+            xmlDoc.Load(zipperFilePath + "ZipperDataFile.xml");
+            XmlNodeList symbolNodes = xmlDoc.SelectNodes("//SYMBOLS/SYMBOL");
+            int i = 0;
+            foreach (XmlNode sym in symbolNodes)
+            {
+                sym.Attributes["value"].Value = TDFGlobals.symbols[i].trdPrc.ToString();
+                sym.Attributes["change"].Value = TDFGlobals.symbols[i].netChg.ToString();
+                if (TDFGlobals.symbols[i].netChg > 0)
+                    sym.Attributes["arrow"].Value = "up.jpg";
+                else if (TDFGlobals.symbols[i].netChg < 0)
+                    sym.Attributes["arrow"].Value = "down.jpg";
+                else if (TDFGlobals.symbols[i].netChg == 0)
+                    sym.Attributes["arrow"].Value = "unch.jpg";
+                i++;
+                
+            }
+            xmlDoc.Save(zipperFilePath + "ZipperDataFile.xml");
+
+        }
+
+        private void button7_Click(object sender, EventArgs e)
+        {
+            UpdateZipperDataFile();
         }
     }
 
