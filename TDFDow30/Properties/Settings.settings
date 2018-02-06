@@ -35,10 +35,13 @@
       <Value Profile="(Default)">X20FinancialDataDev</Value>
     </Setting>
     <Setting Name="Dynamic" Type="System.Boolean" Scope="Application">
-      <Value Profile="(Default)">True</Value>
+      <Value Profile="(Default)">False</Value>
     </Setting>
-    <Setting Name="ZipperFilePath" Type="System.String" Scope="User">
+    <Setting Name="ZipperFilePath" Type="System.String" Scope="Application">
       <Value Profile="(Default)">c:\X\</Value>
+    </Setting>
+    <Setting Name="DebugMode" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">False</Value>
     </Setting>
   </Settings>
 </SettingsFile>

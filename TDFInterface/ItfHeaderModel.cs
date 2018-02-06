@@ -161,6 +161,7 @@ namespace TDFInterface
     {
         public string symbol { get; set; }
         public string symbolFull { get; set; }
+        public string name { get; set; }
         public UInt16 seqId { get; set; }
         public int queryType { get; set; }
         public string queryStr { get; set; }

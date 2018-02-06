@@ -64,6 +64,7 @@
             this.button5 = new System.Windows.Forms.Button();
             this.button6 = new System.Windows.Forms.Button();
             this.button7 = new System.Windows.Forms.Button();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.groupBox5.SuspendLayout();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
@@ -71,13 +72,14 @@
             this.gbTimeOfLastDelete.SuspendLayout();
             this.gbTime.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
+            this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
             // groupBox5
             // 
             this.groupBox5.Controls.Add(this.lblHostName);
             this.groupBox5.Controls.Add(this.lblIpAddress);
-            this.groupBox5.Location = new System.Drawing.Point(561, 12);
+            this.groupBox5.Location = new System.Drawing.Point(277, 12);
             this.groupBox5.Name = "groupBox5";
             this.groupBox5.Size = new System.Drawing.Size(423, 38);
             this.groupBox5.TabIndex = 172;
@@ -106,8 +108,7 @@
             // 
             // groupBox1
             // 
-            this.groupBox1.Controls.Add(this.pictureBox2);
-            this.groupBox1.Controls.Add(this.pictureBox1);
+            this.groupBox1.Controls.Add(this.groupBox2);
             this.groupBox1.Controls.Add(this.lblLogResp);
             this.groupBox1.Controls.Add(this.ConnectButton);
             this.groupBox1.Controls.Add(this.label7);
@@ -124,7 +125,7 @@
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox1.Location = new System.Drawing.Point(6, 56);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(1110, 85);
+            this.groupBox1.Size = new System.Drawing.Size(945, 85);
             this.groupBox1.TabIndex = 171;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Login Info";
@@ -132,7 +133,7 @@
             // pictureBox2
             // 
             this.pictureBox2.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox2.Image")));
-            this.pictureBox2.Location = new System.Drawing.Point(702, 40);
+            this.pictureBox2.Location = new System.Drawing.Point(43, 22);
             this.pictureBox2.Name = "pictureBox2";
             this.pictureBox2.Size = new System.Drawing.Size(16, 16);
             this.pictureBox2.TabIndex = 164;
@@ -142,7 +143,7 @@
             // pictureBox1
             // 
             this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
-            this.pictureBox1.Location = new System.Drawing.Point(702, 40);
+            this.pictureBox1.Location = new System.Drawing.Point(43, 21);
             this.pictureBox1.Name = "pictureBox1";
             this.pictureBox1.Size = new System.Drawing.Size(16, 16);
             this.pictureBox1.TabIndex = 163;
@@ -160,33 +161,36 @@
             // 
             // ConnectButton
             // 
-            this.ConnectButton.Location = new System.Drawing.Point(582, 27);
+            this.ConnectButton.Location = new System.Drawing.Point(688, 22);
             this.ConnectButton.Name = "ConnectButton";
             this.ConnectButton.Size = new System.Drawing.Size(105, 39);
             this.ConnectButton.TabIndex = 159;
             this.ConnectButton.Text = "Connect";
             this.ConnectButton.UseVisualStyleBackColor = true;
+            this.ConnectButton.Visible = false;
             this.ConnectButton.Click += new System.EventHandler(this.ConnectButton_Click);
             // 
             // label7
             // 
             this.label7.AutoSize = true;
             this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label7.Location = new System.Drawing.Point(751, 27);
+            this.label7.Location = new System.Drawing.Point(799, 28);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(113, 16);
             this.label7.TabIndex = 167;
             this.label7.Text = "Num Catalogs: ";
+            this.label7.Visible = false;
             // 
             // label1
             // 
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(942, 27);
+            this.label1.Location = new System.Drawing.Point(799, 61);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(46, 17);
             this.label1.TabIndex = 176;
             this.label1.Text = "label1";
+            this.label1.Visible = false;
             // 
             // PWlabel
             // 
@@ -202,17 +206,19 @@
             // 
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(751, 43);
+            this.label6.Location = new System.Drawing.Point(799, 44);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(94, 16);
             this.label6.TabIndex = 166;
             this.label6.Text = "Num Fields: ";
+            this.label6.Visible = false;
             // 
             // PWTextBox
             // 
             this.PWTextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.PWTextBox.Location = new System.Drawing.Point(440, 35);
             this.PWTextBox.Name = "PWTextBox";
+            this.PWTextBox.ReadOnly = true;
             this.PWTextBox.Size = new System.Drawing.Size(126, 23);
             this.PWTextBox.TabIndex = 157;
             // 
@@ -231,6 +237,7 @@
             this.UserTextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.UserTextBox.Location = new System.Drawing.Point(298, 35);
             this.UserTextBox.Name = "UserTextBox";
+            this.UserTextBox.ReadOnly = true;
             this.UserTextBox.Size = new System.Drawing.Size(126, 23);
             this.UserTextBox.TabIndex = 155;
             // 
@@ -249,6 +256,7 @@
             this.PortTextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.PortTextBox.Location = new System.Drawing.Point(150, 35);
             this.PortTextBox.Name = "PortTextBox";
+            this.PortTextBox.ReadOnly = true;
             this.PortTextBox.Size = new System.Drawing.Size(126, 23);
             this.PortTextBox.TabIndex = 153;
             // 
@@ -267,6 +275,7 @@
             this.IPTextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.IPTextBox.Location = new System.Drawing.Point(8, 35);
             this.IPTextBox.Name = "IPTextBox";
+            this.IPTextBox.ReadOnly = true;
             this.IPTextBox.Size = new System.Drawing.Size(126, 23);
             this.IPTextBox.TabIndex = 151;
             // 
@@ -275,12 +284,13 @@
             this.gbTimeOfLastDelete.Controls.Add(this.lblReceivedTime);
             this.gbTimeOfLastDelete.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.gbTimeOfLastDelete.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.gbTimeOfLastDelete.Location = new System.Drawing.Point(295, 8);
+            this.gbTimeOfLastDelete.Location = new System.Drawing.Point(708, 12);
             this.gbTimeOfLastDelete.Name = "gbTimeOfLastDelete";
             this.gbTimeOfLastDelete.Size = new System.Drawing.Size(260, 42);
             this.gbTimeOfLastDelete.TabIndex = 170;
             this.gbTimeOfLastDelete.TabStop = false;
             this.gbTimeOfLastDelete.Text = "Last Data Received";
+            this.gbTimeOfLastDelete.Visible = false;
             // 
             // lblReceivedTime
             // 
@@ -331,7 +341,7 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(36, 910);
+            this.button1.Location = new System.Drawing.Point(36, 848);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(171, 39);
             this.button1.TabIndex = 174;
@@ -342,7 +352,7 @@
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(213, 910);
+            this.button2.Location = new System.Drawing.Point(97, 854);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(171, 39);
             this.button2.TabIndex = 175;
@@ -353,7 +363,7 @@
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(401, 910);
+            this.button3.Location = new System.Drawing.Point(230, 854);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(171, 39);
             this.button3.TabIndex = 177;
@@ -366,11 +376,12 @@
             // 
             this.listBox1.FormattingEnabled = true;
             this.listBox1.HorizontalScrollbar = true;
-            this.listBox1.Location = new System.Drawing.Point(973, 153);
+            this.listBox1.Location = new System.Drawing.Point(718, 147);
             this.listBox1.Name = "listBox1";
             this.listBox1.ScrollAlwaysVisible = true;
             this.listBox1.Size = new System.Drawing.Size(216, 719);
             this.listBox1.TabIndex = 178;
+            this.listBox1.Visible = false;
             // 
             // timer1
             // 
@@ -379,12 +390,13 @@
             // 
             // button4
             // 
-            this.button4.Location = new System.Drawing.Point(846, 910);
+            this.button4.Location = new System.Drawing.Point(601, 857);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(99, 36);
             this.button4.TabIndex = 179;
             this.button4.Text = "Test Email";
             this.button4.UseVisualStyleBackColor = true;
+            this.button4.Visible = false;
             this.button4.Click += new System.EventHandler(this.button4_Click);
             // 
             // TODTimer
@@ -394,39 +406,53 @@
             // 
             // button5
             // 
-            this.button5.Location = new System.Drawing.Point(1066, 910);
+            this.button5.Location = new System.Drawing.Point(828, 856);
             this.button5.Name = "button5";
             this.button5.Size = new System.Drawing.Size(123, 38);
             this.button5.TabIndex = 180;
             this.button5.Text = "Disconnect";
             this.button5.UseVisualStyleBackColor = true;
+            this.button5.Visible = false;
             this.button5.Click += new System.EventHandler(this.button5_Click);
             // 
             // button6
             // 
-            this.button6.Location = new System.Drawing.Point(951, 910);
+            this.button6.Location = new System.Drawing.Point(708, 857);
             this.button6.Name = "button6";
             this.button6.Size = new System.Drawing.Size(109, 36);
             this.button6.TabIndex = 181;
             this.button6.Text = "Pause";
             this.button6.UseVisualStyleBackColor = true;
+            this.button6.Visible = false;
             this.button6.Click += new System.EventHandler(this.button6_Click);
             // 
             // button7
             // 
-            this.button7.Location = new System.Drawing.Point(660, 907);
+            this.button7.Location = new System.Drawing.Point(424, 854);
             this.button7.Name = "button7";
             this.button7.Size = new System.Drawing.Size(171, 39);
             this.button7.TabIndex = 182;
             this.button7.Text = "Update ZipperDataFile";
             this.button7.UseVisualStyleBackColor = true;
+            this.button7.Visible = false;
             this.button7.Click += new System.EventHandler(this.button7_Click);
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.pictureBox2);
+            this.groupBox2.Controls.Add(this.pictureBox1);
+            this.groupBox2.Location = new System.Drawing.Point(583, 17);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(99, 48);
+            this.groupBox2.TabIndex = 177;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Connected";
             // 
             // frmMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1223, 967);
+            this.ClientSize = new System.Drawing.Size(987, 915);
             this.Controls.Add(this.button7);
             this.Controls.Add(this.button6);
             this.Controls.Add(this.button5);
@@ -453,6 +479,7 @@
             this.gbTimeOfLastDelete.ResumeLayout(false);
             this.gbTime.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
+            this.groupBox2.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -493,6 +520,7 @@
         private System.Windows.Forms.Button button5;
         private System.Windows.Forms.Button button6;
         private System.Windows.Forms.Button button7;
+        private System.Windows.Forms.GroupBox groupBox2;
     }
 }
 

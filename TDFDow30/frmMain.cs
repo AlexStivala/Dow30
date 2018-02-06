@@ -100,6 +100,7 @@ namespace TDFDow30
         public bool dynamic = false;
         public List<string> messages = new List<string>();
         public string zipperFilePath;
+        public bool debugMode = false;
 
 
 
@@ -222,6 +223,7 @@ namespace TDFDow30
                 dbTableName = Properties.Settings.Default.dbTableName;
                 dynamic = Properties.Settings.Default.Dynamic;
                 zipperFilePath = Properties.Settings.Default.ZipperFilePath;
+                debugMode = Properties.Settings.Default.DebugMode;
 
 
                 disconnectTime = DateTime.Today + Properties.Settings.Default.Reset_Connection;
@@ -303,6 +305,7 @@ namespace TDFDow30
                 //log.Debug("frmMain Exception occurred during main form load", ex);
             }
             TODTimer.Enabled = true;
+            ConnectToTDF();
         }
 
 
@@ -404,6 +407,7 @@ namespace TDFDow30
                     sd1.queryType = (int)QueryTypes.Portfolio_Mgr;
                 sd1.queryStr = "";
                 sd1.symbol = sd.SubscribeSymbol;
+                sd1.name = sd.DisplayName.ToUpper();
                 sd1.seqId = 5;
                 sd1.updated = DateTime.Now;
                 TDFGlobals.symbols.Add(sd1);
@@ -677,7 +681,8 @@ namespace TDFDow30
             {
                 TRConnected = false;
             }
-            messages.Add("status: " + status.ToString());
+            if (debugMode)
+                messages.Add("status: " + status.ToString());
             // Send to log - DEBUG ONLY
             log.Debug("TR Connection Status: " + status.ToString());
         }
@@ -690,8 +695,6 @@ namespace TDFDow30
             {
                 // Send the data; terminiate with CRLF
                 TRClientSocket.Send(outbuf);
-
-                
             }
             catch (Exception ex)
             {
@@ -779,7 +782,6 @@ namespace TDFDow30
             {
                 GetDow30Data();
                 Thread.Sleep(50);
-
             }
 
             if (TDFGlobals.financialResults.Count > 0)
@@ -792,16 +794,23 @@ namespace TDFDow30
                     if (sym != oldSym && sym != null)
                     {
                         s = TDFGlobals.financialResults[i].symbolFull;
-                        if (i == 0)
-                            listBox1.Items.Add("----------");
-                        if (dynamic == false)
-                            listBox1.Items.Add(" ");
-                        listBox1.Items.Add(s);
+
+                        if (debugMode)
+                        {
+                            if (i == 0)
+                                listBox1.Items.Add("----------");
+                            if (dynamic == false)
+                                listBox1.Items.Add(" ");
+                            listBox1.Items.Add(s);
+
+                        }
+
                         oldSym = sym;
                     }
 
-                    if (dynamic == false)
+                    if (dynamic == false && debugMode == true)
                         DisplayResults(TDFGlobals.financialResults, i);
+
                     if (TDFGlobals.financialResults.Count > 0)
                         TDFProcessingFunctions.SetSymbolData(TDFGlobals.financialResults, i, symbolIndex);
 
@@ -834,8 +843,8 @@ namespace TDFDow30
                     }
 
                 }
-
-                label1.Text = $"Elapsed: {ts.TotalMilliseconds.ToString()} msec";
+                UpdateZipperDataFile();
+                //label1.Text = $"Elapsed: {ts.TotalMilliseconds.ToString()} msec";
             }
         }
 
@@ -1041,7 +1050,8 @@ namespace TDFDow30
 
             for (int i = 0; i< messages.Count; i++)
             {
-                listBox1.Items.Add(messages[i]);
+                if (debugMode)
+                    listBox1.Items.Add(messages[i]);
 
             }
             messages.Clear();
@@ -1117,28 +1127,99 @@ namespace TDFDow30
             else
                 button6.Text = "GO";
         }
-        public void UpdateZipperDataFile()
+        public void UpdateZipperDataFile1()
         {
             XmlDocument xmlDoc = new XmlDocument();
             xmlDoc.Load(zipperFilePath + "ZipperDataFile.xml");
             XmlNodeList symbolNodes = xmlDoc.SelectNodes("//SYMBOLS/SYMBOL");
+
+            bool unchFlag = false;
             int i = 0;
+
             foreach (XmlNode sym in symbolNodes)
             {
+                
                 sym.Attributes["value"].Value = TDFGlobals.symbols[i].trdPrc.ToString();
-                sym.Attributes["change"].Value = TDFGlobals.symbols[i].netChg.ToString();
+
                 if (TDFGlobals.symbols[i].netChg > 0)
+                {
+                    sym.Attributes["value"].Value = TDFGlobals.symbols[i].trdPrc.ToString();
+                    sym.Attributes["change"].Value = TDFGlobals.symbols[i].netChg.ToString();
                     sym.Attributes["arrow"].Value = "up.jpg";
+                }
                 else if (TDFGlobals.symbols[i].netChg < 0)
+                {
+                    sym.Attributes["value"].Value = TDFGlobals.symbols[i].trdPrc.ToString();
+                    float absChange = Math.Abs(TDFGlobals.symbols[i].netChg);
+                    sym.Attributes["change"].Value = absChange.ToString();
                     sym.Attributes["arrow"].Value = "down.jpg";
+                }
                 else if (TDFGlobals.symbols[i].netChg == 0)
-                    sym.Attributes["arrow"].Value = "unch.jpg";
+                {
+                    sym.Attributes["value"].Value = TDFGlobals.symbols[i].trdPrc.ToString();
+                    sym.Attributes["change"].Value = "UNCH";
+                    unchFlag = true;
+                }
                 i++;
                 
             }
             xmlDoc.Save(zipperFilePath + "ZipperDataFile.xml");
+            if (unchFlag)
+            {
+                timer1.Enabled = false;
+                unchFlag = false;
+            }
 
         }
+
+
+        public void UpdateZipperDataFile()
+        {
+            
+            bool unchFlag = false;
+            
+            XmlWriter xmlWriter = XmlWriter.Create(zipperFilePath + "ZipperDataFile.xml");
+            xmlWriter.WriteStartDocument();
+            xmlWriter.WriteStartElement("SYMBOLS");
+            
+            for (int i = 0; i < 3; i++)
+            {
+                xmlWriter.WriteStartElement("SYMBOL");
+
+                xmlWriter.WriteAttributeString("name", TDFGlobals.symbols[i].name.ToString());
+                xmlWriter.WriteAttributeString("value", TDFGlobals.symbols[i].trdPrc.ToString());
+                if (TDFGlobals.symbols[i].netChg > 0)
+                {
+                    xmlWriter.WriteAttributeString("change", TDFGlobals.symbols[i].netChg.ToString());
+                    xmlWriter.WriteAttributeString("arrow", "up.jpg");
+                }
+                else if (TDFGlobals.symbols[i].netChg < 0)
+                {
+                    float absChange = Math.Abs(TDFGlobals.symbols[i].netChg);
+                    xmlWriter.WriteAttributeString("change", absChange.ToString());
+                    xmlWriter.WriteAttributeString("arrow", "down.jpg");
+                }
+                else if (TDFGlobals.symbols[i].netChg == 0)
+                {
+                    xmlWriter.WriteAttributeString("change", "UNCH");
+                    unchFlag = true;
+                }
+
+                xmlWriter.WriteEndElement();
+            }
+
+            xmlWriter.WriteEndDocument();
+            xmlWriter.Close();
+
+            if (unchFlag)
+            {
+                timer1.Enabled = false;
+                unchFlag = false;
+            }
+
+        }
+
+
 
         private void button7_Click(object sender, EventArgs e)
         {
