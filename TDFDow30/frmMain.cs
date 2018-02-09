@@ -101,6 +101,8 @@ namespace TDFDow30
         public List<string> messages = new List<string>();
         public string zipperFilePath;
         public bool debugMode = false;
+        public bool timerFlag = false;
+        public bool resetFlag = false;
 
 
 
@@ -283,7 +285,7 @@ namespace TDFDow30
                 */
 
                 // Log application start
-                log.Info("*********** Starting TDFDow30 **********");
+                log.Debug("\r\n\r\n*********** Starting TDFDow30 **********\r\n");
 
 
 
@@ -567,6 +569,7 @@ namespace TDFDow30
                                     // Get the elapsed time as a TimeSpan value.
                                     ts = stopWatch.Elapsed;
                                     stopWatch.Reset();
+                                    WatchdogTimer.Enabled = false;
 
                                 }
                                 break;
@@ -683,6 +686,7 @@ namespace TDFDow30
             }
             if (debugMode)
                 messages.Add("status: " + status.ToString());
+
             // Send to log - DEBUG ONLY
             log.Debug("TR Connection Status: " + status.ToString());
         }
@@ -769,6 +773,7 @@ namespace TDFDow30
                 byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, query, TDFconstants.DATA_REQUEST, 5);
 
                 TRSendCommand(outputbuf);
+                WatchdogTimer.Enabled = true;
             }
         }
 
@@ -989,9 +994,9 @@ namespace TDFDow30
             }
             
         }
-        public void SendEmail()
+        public void SendEmail(string msg)
         {
-            MailMessage mail = new MailMessage("TDFDow30App@foxnews.com", "mike.dilworth@foxnews.com");
+            MailMessage mail = new MailMessage("TDFDow30App@foxnews.com", "242 -GFX Engineering <GFXEngineering@FOXNEWS.COM>");
             //MailMessage mail = new MailMessage("TDFDow30App@foxnews.com", "alex.stivala@foxnews.com");
 
             SmtpClient mailClient = new SmtpClient();
@@ -999,18 +1004,20 @@ namespace TDFDow30
             mailClient.DeliveryMethod = SmtpDeliveryMethod.Network;
             mailClient.UseDefaultCredentials = true;
             mailClient.Host = "10.232.16.121";
-            mail.Subject = "Status Update";
+            mail.Subject = "TDFDow30 Error";
+            //mail.Subject = "TDFDow30 Test Email";
             //mail.Body = "[" + DateTime.Now + "] " + Environment.NewLine + "The data monitor application has encountered a error" + Environment.NewLine + e.ToString();
             //mail.Body = "[" + DateTime.Now + "] " + Environment.NewLine + "This is a test message!" + Environment.NewLine;
-            mail.Body = "This is a greeting from the TDFDow30 application - just saying hello." + Environment.NewLine +
-                "No need to worry, no Fatal Exception Errors, no Warnings, just running smooooooth." + Environment.NewLine +
-                "Almost could be a Corona commercial.";
+            //mail.Body = "This is a greeting from the TDFDow30 application - just saying hello." + Environment.NewLine +
+            //"No need to worry, no Fatal Exception Errors, no Warnings, just running smooooooth." + Environment.NewLine +
+            //"Almost could be a Corona commercial.";
+            mail.Body = msg;
             mailClient.Send(mail);
         }
 
         private void button4_Click(object sender, EventArgs e)
         {
-            SendEmail();
+            SendEmail("[" + DateTime.Now + "] " + "TDFDow30 test message. Pleae ignore.");
         }
 
         private void frmMain_FormClosing(object sender, FormClosingEventArgs e)
@@ -1058,6 +1065,13 @@ namespace TDFDow30
             listBox1.SelectedIndex = listBox1.Items.Count - 1;
 
 
+            if (timerFlag == true && DateTime.Now > refTime)
+                timerFlag = false;
+
+            if (resetFlag == true && DateTime.Now > refTime)
+                resetFlag = false;
+
+
             if (resetComplete == true && DateTime.Now > refTime)
                 resetComplete = false;
 
@@ -1083,12 +1097,23 @@ namespace TDFDow30
             TDFGlobals.financialResults.Clear();
             ConnectToTDF();
             resetting = false;
-            resetComplete = true;
-            disconnectTime = disconnectTime.AddDays(1);
-            refTime = refTime.AddDays(1);
-            timer1.Enabled = true;
-            log.Debug("Reset complete");
-
+            if (TRConnected == true)
+            {
+                resetComplete = true;
+                disconnectTime = disconnectTime.AddDays(1);
+                refTime = refTime.AddDays(1);
+                timer1.Enabled = true;
+                log.Debug("Reset complete");
+            }
+            else
+            {
+                if (resetFlag == false)
+                {
+                    resetFlag = true;
+                    string msg = "[" + DateTime.Now + "] TDFDow30 reset error. Failed to reconnect after timed disconnect.";
+                    SendEmail(msg);
+                }
+            }
         }
 
         public void UnsubscribeAll()
@@ -1164,12 +1189,7 @@ namespace TDFDow30
                 
             }
             xmlDoc.Save(zipperFilePath + "ZipperDataFile.xml");
-            if (unchFlag)
-            {
-                timer1.Enabled = false;
-                unchFlag = false;
-            }
-
+            
         }
 
 
@@ -1211,12 +1231,7 @@ namespace TDFDow30
             xmlWriter.WriteEndDocument();
             xmlWriter.Close();
 
-            if (unchFlag)
-            {
-                timer1.Enabled = false;
-                unchFlag = false;
-            }
-
+            
         }
 
 
@@ -1224,6 +1239,16 @@ namespace TDFDow30
         private void button7_Click(object sender, EventArgs e)
         {
             UpdateZipperDataFile();
+        }
+
+        private void WatchdogTimer_Tick(object sender, EventArgs e)
+        {
+            if (timerFlag == false)
+            {
+                timerFlag = true;
+                string msg = "[" + DateTime.Now + "] TDFDow30 response error. Data requested with no response.";
+                SendEmail(msg);
+            }
         }
     }
 

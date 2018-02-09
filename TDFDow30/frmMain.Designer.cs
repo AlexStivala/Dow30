@@ -65,6 +65,7 @@
             this.button6 = new System.Windows.Forms.Button();
             this.button7 = new System.Windows.Forms.Button();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.WatchdogTimer = new System.Windows.Forms.Timer(this.components);
             this.groupBox5.SuspendLayout();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
@@ -335,7 +336,7 @@
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView1.Location = new System.Drawing.Point(36, 147);
             this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.Size = new System.Drawing.Size(915, 746);
+            this.dataGridView1.Size = new System.Drawing.Size(915, 837);
             this.dataGridView1.TabIndex = 173;
             this.dataGridView1.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView1_CellContentClick);
             // 
@@ -448,11 +449,16 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Connected";
             // 
+            // WatchdogTimer
+            // 
+            this.WatchdogTimer.Interval = 5000;
+            this.WatchdogTimer.Tick += new System.EventHandler(this.WatchdogTimer_Tick);
+            // 
             // frmMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(987, 915);
+            this.ClientSize = new System.Drawing.Size(987, 996);
             this.Controls.Add(this.button7);
             this.Controls.Add(this.button6);
             this.Controls.Add(this.button5);
@@ -521,6 +527,7 @@
         private System.Windows.Forms.Button button6;
         private System.Windows.Forms.Button button7;
         private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.Timer WatchdogTimer;
     }
 }
 
