@@ -34,6 +34,7 @@
             this.lblHostName = new System.Windows.Forms.Label();
             this.lblIpAddress = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.pictureBox2 = new System.Windows.Forms.PictureBox();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.lblLogResp = new System.Windows.Forms.Label();
@@ -64,16 +65,15 @@
             this.button5 = new System.Windows.Forms.Button();
             this.button6 = new System.Windows.Forms.Button();
             this.button7 = new System.Windows.Forms.Button();
-            this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.WatchdogTimer = new System.Windows.Forms.Timer(this.components);
             this.groupBox5.SuspendLayout();
             this.groupBox1.SuspendLayout();
+            this.groupBox2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.gbTimeOfLastDelete.SuspendLayout();
             this.gbTime.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
-            this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
             // groupBox5
@@ -130,6 +130,17 @@
             this.groupBox1.TabIndex = 171;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Login Info";
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.pictureBox2);
+            this.groupBox2.Controls.Add(this.pictureBox1);
+            this.groupBox2.Location = new System.Drawing.Point(583, 17);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(99, 48);
+            this.groupBox2.TabIndex = 177;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Connected";
             // 
             // pictureBox2
             // 
@@ -377,7 +388,7 @@
             // 
             this.listBox1.FormattingEnabled = true;
             this.listBox1.HorizontalScrollbar = true;
-            this.listBox1.Location = new System.Drawing.Point(718, 147);
+            this.listBox1.Location = new System.Drawing.Point(694, 147);
             this.listBox1.Name = "listBox1";
             this.listBox1.ScrollAlwaysVisible = true;
             this.listBox1.Size = new System.Drawing.Size(216, 719);
@@ -418,7 +429,7 @@
             // 
             // button6
             // 
-            this.button6.Location = new System.Drawing.Point(708, 857);
+            this.button6.Location = new System.Drawing.Point(708, 858);
             this.button6.Name = "button6";
             this.button6.Size = new System.Drawing.Size(109, 36);
             this.button6.TabIndex = 181;
@@ -438,17 +449,6 @@
             this.button7.Visible = false;
             this.button7.Click += new System.EventHandler(this.button7_Click);
             // 
-            // groupBox2
-            // 
-            this.groupBox2.Controls.Add(this.pictureBox2);
-            this.groupBox2.Controls.Add(this.pictureBox1);
-            this.groupBox2.Location = new System.Drawing.Point(583, 17);
-            this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(99, 48);
-            this.groupBox2.TabIndex = 177;
-            this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "Connected";
-            // 
             // WatchdogTimer
             // 
             this.WatchdogTimer.Interval = 5000;
@@ -458,7 +458,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(987, 996);
+            this.ClientSize = new System.Drawing.Size(994, 996);
             this.Controls.Add(this.button7);
             this.Controls.Add(this.button6);
             this.Controls.Add(this.button5);
@@ -480,12 +480,12 @@
             this.groupBox5.PerformLayout();
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
+            this.groupBox2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.gbTimeOfLastDelete.ResumeLayout(false);
             this.gbTime.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
-            this.groupBox2.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }

@@ -92,7 +92,7 @@ namespace TDFDow30.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("X20FinancialDataDev")]
+        [global::System.Configuration.DefaultSettingValueAttribute("X20FinancialData")]
         public string dbTableName {
             get {
                 return ((string)(this["dbTableName"]));
@@ -119,7 +119,7 @@ namespace TDFDow30.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
         public bool DebugMode {
             get {
                 return ((bool)(this["DebugMode"]));

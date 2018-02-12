@@ -32,7 +32,7 @@
       <Value Profile="(Default)">03:45:00</Value>
     </Setting>
     <Setting Name="dbTableName" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">X20FinancialDataDev</Value>
+      <Value Profile="(Default)">X20FinancialData</Value>
     </Setting>
     <Setting Name="Dynamic" Type="System.Boolean" Scope="Application">
       <Value Profile="(Default)">False</Value>
@@ -41,7 +41,7 @@
       <Value Profile="(Default)">c:\X\</Value>
     </Setting>
     <Setting Name="DebugMode" Type="System.Boolean" Scope="Application">
-      <Value Profile="(Default)">False</Value>
+      <Value Profile="(Default)">True</Value>
     </Setting>
   </Settings>
 </SettingsFile>

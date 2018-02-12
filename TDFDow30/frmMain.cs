@@ -933,7 +933,7 @@ namespace TDFDow30
 
         public void UpdateDB(symbolData sd)
         {
-            string cmdStr = "sp_UpdateSymbolDataDev @Symbol, @Last, @Change, @PercentChange, @UpdateTime";
+            string cmdStr = "sp_UpdateSymbolData @Symbol, @Last, @Change, @PercentChange, @UpdateTime";
             
             //Save out the top-level metadata
             try
