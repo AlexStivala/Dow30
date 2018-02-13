@@ -72,17 +72,6 @@ namespace TDFDow30.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
-        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=x2-sql-pri;Initial Catalog=X20Financial_TDF;Persist Security Info=Tru" +
-            "e;User ID=sa;Password=Engineer@1")]
-        public string X20Financial_TDFConnectionString {
-            get {
-                return ((string)(this["X20Financial_TDFConnectionString"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("03:45:00")]
         public global::System.TimeSpan Reset_Connection {
             get {
@@ -92,7 +81,7 @@ namespace TDFDow30.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("X20FinancialData")]
+        [global::System.Configuration.DefaultSettingValueAttribute("X20FinancialDataDev")]
         public string dbTableName {
             get {
                 return ((string)(this["dbTableName"]));
@@ -123,6 +112,15 @@ namespace TDFDow30.Properties {
         public bool DebugMode {
             get {
                 return ((bool)(this["DebugMode"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("sp_UpdateSymbolDataDev")]
+        public string spUpdate {
+            get {
+                return ((string)(this["spUpdate"]));
             }
         }
     }

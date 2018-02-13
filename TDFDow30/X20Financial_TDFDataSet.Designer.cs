@@ -2694,7 +2694,7 @@ SELECT ErrorCode, Category, SeverityLevel, LogEntry FROM ErrorCodes WHERE (Error
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "15.0.0.0")]
         private void InitConnection() {
             this._connection = new global::System.Data.SqlClient.SqlConnection();
-            this._connection.ConnectionString = global::TDFDow30.Properties.Settings.Default.X20Financial_TDFConnectionString;
+            this._connection.ConnectionString = global::TDFDow30.Properties.Settings.Default.dbConn;
             
         }
 
@@ -3107,7 +3107,7 @@ SELECT ChannelID, LogEntryID, SeverityLevel, ErrorCode, LogEntry, SupplementalDa
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "15.0.0.0")]
         private void InitConnection() {
             this._connection = new global::System.Data.SqlClient.SqlConnection();
-            this._connection.ConnectionString = global::TDFDow30.Properties.Settings.Default.X20Financial_TDFConnectionString;
+            this._connection.ConnectionString = global::TDFDow30.Properties.Settings.Default.dbConn;
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
@@ -3583,7 +3583,7 @@ SELECT SymbolType, SubscribeSymbol, DisplaySymbol, DisplayName, Last, Change, Pe
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "15.0.0.0")]
         private void InitConnection() {
             this._connection = new global::System.Data.SqlClient.SqlConnection();
-            this._connection.ConnectionString = global::TDFDow30.Properties.Settings.Default.X20Financial_TDFConnectionString;
+            this._connection.ConnectionString = global::TDFDow30.Properties.Settings.Default.dbConn;
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
@@ -4116,7 +4116,7 @@ SELECT SymbolType, SubscribeSymbol, DisplaySymbol, DisplayName, Last, Change, Pe
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "15.0.0.0")]
         private void InitConnection() {
             this._connection = new global::System.Data.SqlClient.SqlConnection();
-            this._connection.ConnectionString = global::TDFDow30.Properties.Settings.Default.X20Financial_TDFConnectionString;
+            this._connection.ConnectionString = global::TDFDow30.Properties.Settings.Default.dbConn;
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]

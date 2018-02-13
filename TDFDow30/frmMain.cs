@@ -103,6 +103,7 @@ namespace TDFDow30
         public bool debugMode = false;
         public bool timerFlag = false;
         public bool resetFlag = false;
+        public string spName = "";
 
 
 
@@ -223,6 +224,7 @@ namespace TDFDow30
 
                 dbConn = Properties.Settings.Default.dbConn;
                 dbTableName = Properties.Settings.Default.dbTableName;
+                spName = Properties.Settings.Default.spUpdate;
                 dynamic = Properties.Settings.Default.Dynamic;
                 zipperFilePath = Properties.Settings.Default.ZipperFilePath;
                 debugMode = Properties.Settings.Default.DebugMode;
@@ -925,7 +927,7 @@ namespace TDFDow30
             {
                 symbolData sd = new symbolData();
                 sd = TDFGlobals.symbols[i];
-                if (Dow30Data[i].Last != sd.trdPrc)
+                if (Dow30Data[i].Last != sd.netChg)
                     UpdateDB(sd);
             }
         }
@@ -933,8 +935,9 @@ namespace TDFDow30
 
         public void UpdateDB(symbolData sd)
         {
-            string cmdStr = "sp_UpdateSymbolData @Symbol, @Last, @Change, @PercentChange, @UpdateTime";
-            
+            //string cmdStr = "sp_UpdateSymbolData @Symbol, @Last, @Change, @PercentChange, @UpdateTime";
+            string cmdStr = $"{spName} @Symbol, @Last, @Change, @PercentChange, @UpdateTime";
+
             //Save out the top-level metadata
             try
             {
