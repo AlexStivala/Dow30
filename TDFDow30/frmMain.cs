@@ -1028,6 +1028,7 @@ namespace TDFDow30
             if (dynamic)
                 UnsubscribeAll();
             Logoff();
+            log.Debug("*****  TDFDow30 Closed *****");
         }
         private void Logoff()
         {
