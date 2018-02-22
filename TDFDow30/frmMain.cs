@@ -104,6 +104,7 @@ namespace TDFDow30
         public bool timerFlag = false;
         public bool resetFlag = false;
         public string spName = "";
+        public DateTime timerEmailSent = DateTime.Now.AddDays(-1);
 
 
 
@@ -1069,7 +1070,10 @@ namespace TDFDow30
             listBox1.SelectedIndex = listBox1.Items.Count - 1;
 
 
-            if (timerFlag == true && DateTime.Now > refTime)
+            //if (timerFlag == true && DateTime.Now > refTime)
+                //timerFlag = false;
+
+            if (timerFlag == true && DateTime.Now > timerEmailSent.AddDays(1))
                 timerFlag = false;
 
             if (resetFlag == true && DateTime.Now > refTime)
@@ -1162,7 +1166,6 @@ namespace TDFDow30
             xmlDoc.Load(zipperFilePath + "ZipperDataFile.xml");
             XmlNodeList symbolNodes = xmlDoc.SelectNodes("//SYMBOLS/SYMBOL");
 
-            bool unchFlag = false;
             int i = 0;
 
             foreach (XmlNode sym in symbolNodes)
@@ -1187,7 +1190,6 @@ namespace TDFDow30
                 {
                     sym.Attributes["value"].Value = TDFGlobals.symbols[i].trdPrc.ToString();
                     sym.Attributes["change"].Value = "UNCH";
-                    unchFlag = true;
                 }
                 i++;
                 
@@ -1200,14 +1202,13 @@ namespace TDFDow30
         public void UpdateZipperDataFile()
         {
             
-            bool unchFlag = false;
-            
             XmlWriter xmlWriter = XmlWriter.Create(zipperFilePath + "ZipperDataFile.xml");
             xmlWriter.WriteStartDocument();
             xmlWriter.WriteStartElement("SYMBOLS");
             
             for (int i = 0; i < 3; i++)
             {
+            
                 xmlWriter.WriteStartElement("SYMBOL");
 
                 xmlWriter.WriteAttributeString("name", TDFGlobals.symbols[i].name.ToString());
@@ -1226,7 +1227,6 @@ namespace TDFDow30
                 else if (TDFGlobals.symbols[i].netChg == 0)
                 {
                     xmlWriter.WriteAttributeString("change", "UNCH");
-                    unchFlag = true;
                 }
 
                 xmlWriter.WriteEndElement();
@@ -1235,7 +1235,6 @@ namespace TDFDow30
             xmlWriter.WriteEndDocument();
             xmlWriter.Close();
 
-            
         }
 
 
@@ -1252,6 +1251,9 @@ namespace TDFDow30
                 timerFlag = true;
                 string msg = "[" + DateTime.Now + "] TDFDow30 response error. Data requested with no response.";
                 SendEmail(msg);
+                timerEmailSent = DateTime.Now;
+                log.Debug("TDFDow30 response error. Data requested with no response.");
+
             }
         }
     }

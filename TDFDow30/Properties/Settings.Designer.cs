@@ -81,7 +81,7 @@ namespace TDFDow30.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("X20FinancialDataDev")]
+        [global::System.Configuration.DefaultSettingValueAttribute("X20FinancialData")]
         public string dbTableName {
             get {
                 return ((string)(this["dbTableName"]));
@@ -99,7 +99,7 @@ namespace TDFDow30.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("c:\\X\\")]
+        [global::System.Configuration.DefaultSettingValueAttribute("p:\\")]
         public string ZipperFilePath {
             get {
                 return ((string)(this["ZipperFilePath"]));
@@ -108,7 +108,7 @@ namespace TDFDow30.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool DebugMode {
             get {
                 return ((bool)(this["DebugMode"]));
@@ -117,7 +117,7 @@ namespace TDFDow30.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("sp_UpdateSymbolDataDev")]
+        [global::System.Configuration.DefaultSettingValueAttribute("sp_UpdateSymbolData")]
         public string spUpdate {
             get {
                 return ((string)(this["spUpdate"]));
