@@ -1212,16 +1212,16 @@ namespace TDFDow30
                 xmlWriter.WriteStartElement("SYMBOL");
 
                 xmlWriter.WriteAttributeString("name", TDFGlobals.symbols[i].name.ToString());
-                xmlWriter.WriteAttributeString("value", TDFGlobals.symbols[i].trdPrc.ToString());
+                xmlWriter.WriteAttributeString("value", TDFGlobals.symbols[i].trdPrc.ToString("#####.##"));
                 if (TDFGlobals.symbols[i].netChg > 0)
                 {
-                    xmlWriter.WriteAttributeString("change", TDFGlobals.symbols[i].netChg.ToString());
+                    xmlWriter.WriteAttributeString("change", TDFGlobals.symbols[i].netChg.ToString("#####.##"));
                     xmlWriter.WriteAttributeString("arrow", "up.jpg");
                 }
                 else if (TDFGlobals.symbols[i].netChg < 0)
                 {
                     float absChange = Math.Abs(TDFGlobals.symbols[i].netChg);
-                    xmlWriter.WriteAttributeString("change", absChange.ToString());
+                    xmlWriter.WriteAttributeString("change", absChange.ToString("#####.##"));
                     xmlWriter.WriteAttributeString("arrow", "down.jpg");
                 }
                 else if (TDFGlobals.symbols[i].netChg == 0)
