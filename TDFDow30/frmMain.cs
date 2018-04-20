@@ -1205,23 +1205,35 @@ namespace TDFDow30
             XmlWriter xmlWriter = XmlWriter.Create(zipperFilePath + "ZipperDataFile.xml");
             xmlWriter.WriteStartDocument();
             xmlWriter.WriteStartElement("SYMBOLS");
+            double value;
+            string str;
             
             for (int i = 0; i < 3; i++)
             {
             
                 xmlWriter.WriteStartElement("SYMBOL");
-
+                value = TDFGlobals.symbols[i].trdPrc;
+                str = TDFGlobals.symbols[i].trdPrc.ToString("#####.##");
+                //xmlWriter.WriteAttributeString("name", TDFGlobals.symbols[i].name.ToString());
+                //xmlWriter.WriteAttributeString("value", TDFGlobals.symbols[i].trdPrc.ToString("#####.##"));
+                
                 xmlWriter.WriteAttributeString("name", TDFGlobals.symbols[i].name.ToString());
-                xmlWriter.WriteAttributeString("value", TDFGlobals.symbols[i].trdPrc.ToString("#####.##"));
+                xmlWriter.WriteAttributeString("value", str);
                 if (TDFGlobals.symbols[i].netChg > 0)
                 {
-                    xmlWriter.WriteAttributeString("change", TDFGlobals.symbols[i].netChg.ToString("#####.##"));
+                    value = TDFGlobals.symbols[i].netChg;
+                    str = TDFGlobals.symbols[i].netChg.ToString("#####.##");
+                    //xmlWriter.WriteAttributeString("change", TDFGlobals.symbols[i].netChg.ToString("#####.##"));
+
+                    xmlWriter.WriteAttributeString("change", str);
                     xmlWriter.WriteAttributeString("arrow", "up.jpg");
                 }
                 else if (TDFGlobals.symbols[i].netChg < 0)
                 {
                     float absChange = Math.Abs(TDFGlobals.symbols[i].netChg);
-                    xmlWriter.WriteAttributeString("change", absChange.ToString("#####.##"));
+                    str = absChange.ToString("#####.##");
+                    //xmlWriter.WriteAttributeString("change", absChange.ToString("#####.##"));
+                    xmlWriter.WriteAttributeString("change", str);
                     xmlWriter.WriteAttributeString("arrow", "down.jpg");
                 }
                 else if (TDFGlobals.symbols[i].netChg == 0)
