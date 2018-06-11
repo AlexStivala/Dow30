@@ -66,6 +66,8 @@
             this.button6 = new System.Windows.Forms.Button();
             this.button7 = new System.Windows.Forms.Button();
             this.WatchdogTimer = new System.Windows.Forms.Timer(this.components);
+            this.ResetTimer = new System.Windows.Forms.Timer(this.components);
+            this.button8 = new System.Windows.Forms.Button();
             this.groupBox5.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -454,11 +456,28 @@
             this.WatchdogTimer.Interval = 5000;
             this.WatchdogTimer.Tick += new System.EventHandler(this.WatchdogTimer_Tick);
             // 
+            // ResetTimer
+            // 
+            this.ResetTimer.Interval = 60000;
+            this.ResetTimer.Tick += new System.EventHandler(this.ResetTimer_Tick);
+            // 
+            // button8
+            // 
+            this.button8.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button8.Location = new System.Drawing.Point(56, 915);
+            this.button8.Name = "button8";
+            this.button8.Size = new System.Drawing.Size(112, 42);
+            this.button8.TabIndex = 183;
+            this.button8.Text = "Yesterday\" Close";
+            this.button8.UseVisualStyleBackColor = true;
+            this.button8.Click += new System.EventHandler(this.button8_Click);
+            // 
             // frmMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(994, 996);
+            this.Controls.Add(this.button8);
             this.Controls.Add(this.button7);
             this.Controls.Add(this.button6);
             this.Controls.Add(this.button5);
@@ -473,7 +492,7 @@
             this.Controls.Add(this.gbTimeOfLastDelete);
             this.Controls.Add(this.gbTime);
             this.Name = "frmMain";
-            this.Text = "TDF Dow 30  v1.3";
+            this.Text = "TDF Dow 30  v1.31";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.frmMain_FormClosing);
             this.Load += new System.EventHandler(this.frmMain_Load);
             this.groupBox5.ResumeLayout(false);
@@ -528,6 +547,8 @@
         private System.Windows.Forms.Button button7;
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.Timer WatchdogTimer;
+        private System.Windows.Forms.Timer ResetTimer;
+        private System.Windows.Forms.Button button8;
     }
 }
 

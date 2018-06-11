@@ -10,6 +10,7 @@ using System.Data.SqlClient;
 using System.Configuration;
 using System.Windows.Forms;
 using TDFInterface;
+using log4net;
 
 
 namespace Dow30Database
@@ -29,6 +30,12 @@ namespace Dow30Database
             public DateTime Updated { get; set; }
             
         }
+        public class MarketHolidays
+        {
+            public string holiday { get; set; }
+            public DateTime holiDate { get; set; }
+        }
+
 
 
         public static DataTable GetDBData(string cmdStr, string dbConnection)
@@ -37,7 +44,6 @@ namespace Dow30Database
 
             try
             {
-                //var dbConnection = ConfigurationManager.ConnectionStrings["NRDBconnStr"].ConnectionString;
                 // Instantiate the connection
                 using (SqlConnection connection = new SqlConnection(dbConnection))
                 {
@@ -67,6 +73,43 @@ namespace Dow30Database
 
             return dataTable;
         }
+
+        public static int SQLExec(string cmdStr, string dbConnection)
+        {
+            int numRowsAffected = -2;
+            try
+            {
+                // Instantiate the connection
+                using (SqlConnection connection = new SqlConnection(dbConnection))
+                {
+                    // Create the command and set its properties
+                    using (SqlCommand cmd = new SqlCommand())
+                    {
+                        connection.Open();
+                        using (SqlDataAdapter sqlDataAdapter = new SqlDataAdapter())
+                        {
+                            cmd.CommandText = cmdStr;
+                            sqlDataAdapter.SelectCommand = cmd;
+                            sqlDataAdapter.SelectCommand.Connection = connection;
+                            sqlDataAdapter.SelectCommand.CommandType = CommandType.Text;
+                            numRowsAffected = sqlDataAdapter.SelectCommand.ExecuteNonQuery();
+                        }
+                        connection.Close();
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error
+                //log.Error("GetDBData Exception occurred: " + ex.Message);
+                //log.Debug("GetDBData Exception occurred", ex);
+                numRowsAffected = -1;
+
+            }
+            return numRowsAffected;
+        }
+
 
         public static BindingList<Dow30symbolData> GetSymbolDataCollection(string cmdStr, string dbConnection)
         {
@@ -108,6 +151,41 @@ namespace Dow30Database
             }
             // Return 
             return Dow30;
+        }
+        public static List<MarketHolidays> GetHolidays(string cmdStr, string dbConnection)
+        {
+            DataTable dataTable;
+
+            // Clear out the current collection
+            //candidateData.Clear();
+            List<MarketHolidays> holidays = new List<MarketHolidays>();
+
+
+            try
+            {
+                dataTable = GetDBData(cmdStr, dbConnection);
+
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    var hol = new MarketHolidays()
+                    {
+                        holiday = row["Holiday"].ToString() ?? "",
+                        holiDate = Convert.ToDateTime(row["holiDate"] ?? ""),
+
+                    };
+                    holidays.Add(hol);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error");
+                // Log error
+                //log.Error("GetCandidateDataCollection Exception occurred: " + ex.Message);
+                //log.Debug("GetCandidateDataCollection Exception occurred", ex);
+            }
+            // Return 
+            return holidays;
         }
 
     }

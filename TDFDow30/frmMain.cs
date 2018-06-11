@@ -105,13 +105,30 @@ namespace TDFDow30
         public bool resetFlag = false;
         public string spName = "";
         public DateTime timerEmailSent = DateTime.Now.AddDays(-1);
+        //public DateTime marketOpen = DateTime.Parse("09:30:00");
+        //public DateTime marketClose = DateTime.Parse("16:06:00");
+        public bool marketIsOpen = false;
+        public float dowValue;
+        public float nasdaqValue;
+        public float spxValue;
+        public Int16 chartCnt = 0;
+        public Int16 chartInterval = 1;
 
+        public class X20ChartData
+        {
+            public float dow { get; set; }
+            public float nasdaq { get; set; }
+            public float spx { get; set; }
+        }
+        public X20ChartData X20_chartData = new X20ChartData();
 
 
         public class XMLUpdateEventArgs : EventArgs
         {
             public string XML { get; set; }
         }
+
+        public List<Dow30Database.Dow30DB.MarketHolidays> marketHolidays = new List<Dow30Database.Dow30DB.MarketHolidays>();
 
         //ChartForm cf = new ChartForm();
         //private readonly WindowsFormsSynchronizationContext syncContext;
@@ -297,6 +314,10 @@ namespace TDFDow30
                 //ChartDataUpdated += new EventHandler<ChartLiveUpdateEventArgs>(ChartDataUpdated);
                 //ChartClosed += new EventHandler<ChartClosedEventArgs>(ChartClosed);
 
+                string cmd = $"SELECT * FROM MarketHolidays";
+                marketHolidays = Dow30Database.Dow30DB.GetHolidays(cmd, dbConn);
+
+
                 TDFProcessingFunctions TDFproc = new TDFProcessingFunctions();
                 TDFproc.sendBuf += new SendBuf(TRSendCommand);
                 TODTimer.Enabled = true;
@@ -309,6 +330,7 @@ namespace TDFDow30
                 log.Error("frmMain Exception occurred during main form load: " + ex.Message);
                 //log.Debug("frmMain Exception occurred during main form load", ex);
             }
+            chartCnt = (Int16)(chartInterval - 3);
             TODTimer.Enabled = true;
             ConnectToTDF();
         }
@@ -780,6 +802,63 @@ namespace TDFDow30
             }
         }
 
+        public void GetYesterdaysClose()
+        {
+            string s = "";
+            string sym = "";
+            string oldSym = "";
+
+            timer1.Enabled = false;
+            Thread.Sleep(50);
+            string query = "SELECT ycls FROM PORTFOLIO_MGR WHERE usrSymbol IN (.DJIA,.NCOMP,.SPX)";
+            if (TRConnected)
+            {
+                ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
+                byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, query, TDFconstants.DATA_REQUEST, 5);
+
+                TRSendCommand(outputbuf);
+                //WatchdogTimer.Enabled = true;
+            }
+            Thread.Sleep(50);
+
+            if (TDFGlobals.financialResults.Count > 0)
+            {
+                for (int i = 0; i < TDFGlobals.financialResults.Count; i++)
+                {
+
+                    int symbolIndex = TDFProcessingFunctions.GetSymbolIndx(TDFGlobals.financialResults[i].symbol);
+                    sym = TDFGlobals.financialResults[i].symbol;
+                    if (sym != oldSym && sym != null)
+                    {
+                        s = TDFGlobals.financialResults[i].symbolFull;
+
+                        if (debugMode)
+                        {
+                            if (i == 0)
+                                listBox1.Items.Add("----------");
+                            if (dynamic == false)
+                                listBox1.Items.Add(" ");
+                            listBox1.Items.Add(s);
+
+                        }
+
+                        oldSym = sym;
+                    }
+
+
+                    if (TDFGlobals.financialResults.Count > 0)
+                        TDFProcessingFunctions.SetSymbolData(TDFGlobals.financialResults, i, symbolIndex);
+
+                }
+                TDFGlobals.financialResults.Clear();
+
+                UpdateAllSymbols(true);
+
+                timer1.Enabled = true;
+
+
+            }
+        }
         private void timer1_Tick(object sender, EventArgs e)
         {
             string s = "";
@@ -825,7 +904,7 @@ namespace TDFDow30
                 }
                 TDFGlobals.financialResults.Clear();
 
-                UpdateAllSymbols();
+                UpdateAllSymbols(false);
 
                 string connection = $"SELECT * FROM {dbTableName}";
                 Dow30Data = Dow30Database.Dow30DB.GetSymbolDataCollection(connection, dbConn);
@@ -851,7 +930,7 @@ namespace TDFDow30
                     }
 
                 }
-                UpdateZipperDataFile();
+                //UpdateZipperDataFile();
                 //label1.Text = $"Elapsed: {ts.TotalMilliseconds.ToString()} msec";
             }
         }
@@ -922,14 +1001,36 @@ namespace TDFDow30
 
         }
 
-        public void UpdateAllSymbols()
+        public void UpdateAllSymbols(bool ycls)
         {
             for(int i = 0; i < TDFGlobals.symbols.Count; i++)
             {
                 symbolData sd = new symbolData();
                 sd = TDFGlobals.symbols[i];
-                if (Dow30Data[i].Last != sd.netChg)
+
+                if (Dow30Data[i].Change != sd.netChg)
                     UpdateDB(sd);
+                if (ycls)
+                {
+                    if (sd.symbol == ".DJIA")
+                        dowValue = sd.ycls;
+                    if (sd.symbol == ".NCOMP")
+                        nasdaqValue = sd.ycls;
+                    if (sd.symbol == ".SPX")
+                        spxValue = sd.ycls;
+
+                }
+                else
+                {
+                    if (sd.symbol == ".DJIA")
+                        dowValue = sd.trdPrc;
+                    if (sd.symbol == ".NCOMP")
+                        nasdaqValue = sd.trdPrc;
+                    if (sd.symbol == ".SPX")
+                        spxValue = sd.trdPrc;
+
+                }
+
             }
         }
 
@@ -998,6 +1099,86 @@ namespace TDFDow30
             }
             
         }
+        
+        public void UpdateChartData(X20ChartData cd)
+        {
+            string cmdStr = "sp_Insert_ChartData @Updated, @Dow, @NASDAQ, @SP";
+            
+            //Save out the top-level metadata
+            try
+            {
+                // Instantiate the connection
+                using (SqlConnection connection = new SqlConnection(dbConn))
+                {
+                    connection.Open();
+                    using (SqlDataAdapter sqlDataAdapter = new SqlDataAdapter())
+                    {
+                        using (SqlCommand cmd = new SqlCommand())
+                        {
+                            SqlTransaction transaction;
+                            // Start a local transaction.
+                            transaction = connection.BeginTransaction("Update X20 Chart Data");
+
+                            // Must assign both transaction object and connection 
+                            // to Command object for a pending local transaction
+                            cmd.Connection = connection;
+                            cmd.Transaction = transaction;
+
+                            try
+                            {
+
+                                Int64 UnixTimeInMSecUtc = GetCurrentUnixTimestampMillis();
+                                string UnixTimeInMSecUtcStr = GetCurrentUnixTimestampMillisLocalTime().ToString();
+                                //Specify base command
+                                cmd.CommandText = cmdStr;
+
+                                //cmd.Parameters.Add("@Updated", SqlDbType.BigInt).Value = UnixTimeInMSecUtc;
+                                cmd.Parameters.Add("@Updated", SqlDbType.VarChar).Value = UnixTimeInMSecUtcStr;
+                                cmd.Parameters.Add("@Dow", SqlDbType.Float).Value = cd.dow;
+                                cmd.Parameters.Add("@NASDAQ", SqlDbType.Float).Value = cd.nasdaq;
+                                cmd.Parameters.Add("@SP", SqlDbType.Float).Value = cd.spx;
+                                
+                                sqlDataAdapter.SelectCommand = cmd;
+                                sqlDataAdapter.SelectCommand.Connection = connection;
+                                sqlDataAdapter.SelectCommand.CommandType = CommandType.Text;
+
+                                // Execute stored proc to store top-level metadata
+                                sqlDataAdapter.SelectCommand.ExecuteNonQuery();
+
+                                //Attempt to commit the transaction
+                                transaction.Commit();
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                log.Error("Update X20 Chart Data- SQL Command Exception occurred: " + ex.Message);
+                                log.Debug("Update X20 Chart Data- SQL Command Exception occurred", ex);
+                            }
+                        }
+                    }
+                    connection.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Error("UpdateData- SQL Connection Exception occurred: " + ex.Message);
+
+            }
+
+        }
+
+
+        private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        public static long GetCurrentUnixTimestampMillis()
+        {
+            return (long)(DateTime.UtcNow - UnixEpoch).TotalMilliseconds;
+        }
+        public static long GetCurrentUnixTimestampMillisLocalTime()
+        {
+            return (long)(DateTime.Now - UnixEpoch).TotalMilliseconds;
+        }
+
         public void SendEmail(string msg)
         {
             MailMessage mail = new MailMessage("TDFDow30App@foxnews.com", "242 -GFX Engineering <GFXEngineering@FOXNEWS.COM>");
@@ -1069,6 +1250,58 @@ namespace TDFDow30
             messages.Clear();
             listBox1.SelectedIndex = listBox1.Items.Count - 1;
 
+            
+            DateTime timeNow = DateTime.Now;
+            bool weekday;
+            if (timeNow.DayOfWeek != DayOfWeek.Saturday && timeNow.DayOfWeek != DayOfWeek.Sunday)
+                weekday = true;
+            else
+                weekday = false;
+
+            bool todayIsHoliday = false;
+
+            for (int i = 0; i < marketHolidays.Count; i++)
+            {
+                if (marketHolidays[i].holiDate == DateTime.Today)
+                    todayIsHoliday = true;
+            }
+
+            TimeSpan marketOpen = new TimeSpan(9, 29,58); //9:30 am
+            TimeSpan marketClose = new TimeSpan(16, 10, 0); //4:06 pm  somtimes data is updated a bit after market close
+            TimeSpan currentTime = DateTime.Now.TimeOfDay;
+
+            if (currentTime > marketOpen && currentTime < marketClose && weekday == true && todayIsHoliday == false)
+            {
+
+                if (marketIsOpen == false)
+                {
+                    string cmd = $"DELETE FROM X20ChartData";
+                    int numRows;
+                    numRows = Dow30Database.Dow30DB.SQLExec(cmd, dbConn);
+                    string s = $"Deleted {numRows} DB chart records.";
+                    //listBox1.Items.Add(s);
+                    log.Debug(s);
+                    Thread.Sleep(50);
+                    GetYesterdaysClose();
+                    chartCnt = (short) (chartInterval - 2);
+
+                }
+
+                marketIsOpen = true;
+                chartCnt++;
+
+                if (chartCnt == chartInterval)
+                {
+                    chartCnt = 0;
+                    X20_chartData.dow = dowValue;
+                    X20_chartData.nasdaq = nasdaqValue;
+                    X20_chartData.spx = spxValue;
+                    UpdateChartData(X20_chartData);
+
+                }
+            }
+            else
+                marketIsOpen = false;
 
             //if (timerFlag == true && DateTime.Now > refTime)
                 //timerFlag = false;
@@ -1265,8 +1498,21 @@ namespace TDFDow30
                 SendEmail(msg);
                 timerEmailSent = DateTime.Now;
                 log.Debug("TDFDow30 response error. Data requested with no response.");
+                DisconnectFromTDF();
+                ResetTimer.Enabled = true;
+                timer1.Enabled = false;
 
             }
+        }
+
+        private void ResetTimer_Tick(object sender, EventArgs e)
+        {
+            ResetTDFConnection();
+        }
+
+        private void button8_Click(object sender, EventArgs e)
+        {
+
         }
     }
 

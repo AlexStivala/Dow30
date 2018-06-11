@@ -81,7 +81,7 @@ namespace TDFDow30.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("X20FinancialData")]
+        [global::System.Configuration.DefaultSettingValueAttribute("X20FinancialDataDev")]
         public string dbTableName {
             get {
                 return ((string)(this["dbTableName"]));
@@ -117,7 +117,7 @@ namespace TDFDow30.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("sp_UpdateSymbolData")]
+        [global::System.Configuration.DefaultSettingValueAttribute("sp_UpdateSymbolDataDev")]
         public string spUpdate {
             get {
                 return ((string)(this["spUpdate"]));

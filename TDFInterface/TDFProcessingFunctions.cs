@@ -1117,7 +1117,8 @@ namespace TDFInterface
                     s = System.Text.Encoding.Default.GetString(temp);
                     fin.symbolFull = s;
                     int pos = s.IndexOf("-");
-                    fin.symbol = s.Substring(0, pos);
+                    if (pos > 0)
+                        fin.symbol = s.Substring(0, pos);
 
                     indx += len;
 
