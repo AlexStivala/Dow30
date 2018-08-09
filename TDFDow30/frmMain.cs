@@ -307,8 +307,6 @@ namespace TDFDow30
                 // Log application start
                 log.Debug("\r\n\r\n*********** Starting TDFDow30 **********\r\n");
 
-
-
                 //XMLDataUpdated += new EventHandler<XMLUpdateEventArgs>(DisplayXMLData);
                 //SymbolDataUpdated += new EventHandler<SymbolUpdateEventArgs>(SymbolDataUpdated);
                 //ChartDataUpdated += new EventHandler<ChartLiveUpdateEventArgs>(ChartDataUpdated);
@@ -406,7 +404,7 @@ namespace TDFDow30
             // get data from db table to get symbol list
             string connection = $"SELECT * FROM {dbTableName}";
             Dow30Data = Dow30Database.Dow30DB.GetSymbolDataCollection(connection, dbConn);
-            dataGridView1.DataSource = Dow30Data;
+            symbolDataGrid.DataSource = Dow30Data;
 
             System.Threading.Thread.Sleep(1000);
 
@@ -742,7 +740,7 @@ namespace TDFDow30
         {
             string connection = $"SELECT * FROM {dbTableName}";
             Dow30Data = Dow30Database.Dow30DB.GetSymbolDataCollection(connection, dbConn);
-            dataGridView1.DataSource = Dow30Data;
+            symbolDataGrid.DataSource = Dow30Data;
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -790,7 +788,7 @@ namespace TDFDow30
         public void GetDow30Data()
         {
             stopWatch.Start();
-            string fieldList = "trdPrc, netChg, pcntChg";
+            string fieldList = "trdPrc, netChg, pcntChg, cumVol";
             string query = $"SELECT {fieldList} FROM PORTFOLIO_MGR WHERE usrSymbol IN ({symbolListStr})";
             if (TRConnected)
             {
@@ -908,10 +906,10 @@ namespace TDFDow30
 
                 string connection = $"SELECT * FROM {dbTableName}";
                 Dow30Data = Dow30Database.Dow30DB.GetSymbolDataCollection(connection, dbConn);
-                dataGridView1.DataSource = Dow30Data;
-                dataGridView1.ClearSelection();
+                symbolDataGrid.DataSource = Dow30Data;
+                symbolDataGrid.ClearSelection();
 
-                foreach (DataGridViewRow row in dataGridView1.Rows)
+                foreach (DataGridViewRow row in symbolDataGrid.Rows)
                 {
                     if (Convert.ToSingle(row.Cells[5].Value) < 0)
                     {
