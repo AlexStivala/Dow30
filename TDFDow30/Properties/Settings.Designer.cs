@@ -12,7 +12,7 @@ namespace TDFDow30.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.5.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.9.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -62,8 +62,8 @@ namespace TDFDow30.Properties {
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
-        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=x2-sql-pri;Initial Catalog=X20Financial_TDF;Persist Security Info=Tru" +
-            "e;User ID=sa;Password=Engineer@1")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=10.232.77.71;Initial Catalog=X20Financial_TDF;Persist Security Info=T" +
+            "rue;User ID=X2ouser;Password=C0mpl1cat3d@1")]
         public string dbConn {
             get {
                 return ((string)(this["dbConn"]));
@@ -81,7 +81,7 @@ namespace TDFDow30.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("X20FinancialDataDev")]
+        [global::System.Configuration.DefaultSettingValueAttribute("X20FinancialData")]
         public string dbTableName {
             get {
                 return ((string)(this["dbTableName"]));
@@ -108,7 +108,7 @@ namespace TDFDow30.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
         public bool DebugMode {
             get {
                 return ((bool)(this["DebugMode"]));
@@ -117,10 +117,46 @@ namespace TDFDow30.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("sp_UpdateSymbolDataDev")]
+        [global::System.Configuration.DefaultSettingValueAttribute("sp_UpdateSymbolData")]
         public string spUpdate {
             get {
                 return ((string)(this["spUpdate"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool updateZipperFile {
+            get {
+                return ((bool)(this["updateZipperFile"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool updateChartData {
+            get {
+                return ((bool)(this["updateChartData"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("X20ChartData")]
+        public string chartTableName {
+            get {
+                return ((string)(this["chartTableName"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("sp_Insert_ChartData")]
+        public string spUpdateChart {
+            get {
+                return ((string)(this["spUpdateChart"]));
             }
         }
     }

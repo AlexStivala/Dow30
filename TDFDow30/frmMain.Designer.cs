@@ -55,19 +55,12 @@
             this.gbTime = new System.Windows.Forms.GroupBox();
             this.timeOfDayLabel = new System.Windows.Forms.Label();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
-            this.button1 = new System.Windows.Forms.Button();
-            this.button2 = new System.Windows.Forms.Button();
-            this.button3 = new System.Windows.Forms.Button();
             this.listBox1 = new System.Windows.Forms.ListBox();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
-            this.button4 = new System.Windows.Forms.Button();
             this.TODTimer = new System.Windows.Forms.Timer(this.components);
-            this.button5 = new System.Windows.Forms.Button();
             this.button6 = new System.Windows.Forms.Button();
-            this.button7 = new System.Windows.Forms.Button();
             this.WatchdogTimer = new System.Windows.Forms.Timer(this.components);
             this.ResetTimer = new System.Windows.Forms.Timer(this.components);
-            this.button8 = new System.Windows.Forms.Button();
             this.groupBox5.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -82,9 +75,11 @@
             // 
             this.groupBox5.Controls.Add(this.lblHostName);
             this.groupBox5.Controls.Add(this.lblIpAddress);
-            this.groupBox5.Location = new System.Drawing.Point(277, 12);
+            this.groupBox5.Location = new System.Drawing.Point(416, 18);
+            this.groupBox5.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.groupBox5.Name = "groupBox5";
-            this.groupBox5.Size = new System.Drawing.Size(423, 38);
+            this.groupBox5.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.groupBox5.Size = new System.Drawing.Size(634, 58);
             this.groupBox5.TabIndex = 172;
             this.groupBox5.TabStop = false;
             this.groupBox5.Text = "Host PC Info";
@@ -93,9 +88,10 @@
             // 
             this.lblHostName.AutoSize = true;
             this.lblHostName.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblHostName.Location = new System.Drawing.Point(111, 16);
+            this.lblHostName.Location = new System.Drawing.Point(166, 25);
+            this.lblHostName.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblHostName.Name = "lblHostName";
-            this.lblHostName.Size = new System.Drawing.Size(34, 16);
+            this.lblHostName.Size = new System.Drawing.Size(49, 25);
             this.lblHostName.TabIndex = 122;
             this.lblHostName.Text = "N/A";
             // 
@@ -103,9 +99,10 @@
             // 
             this.lblIpAddress.AutoSize = true;
             this.lblIpAddress.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblIpAddress.Location = new System.Drawing.Point(6, 16);
+            this.lblIpAddress.Location = new System.Drawing.Point(9, 25);
+            this.lblIpAddress.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblIpAddress.Name = "lblIpAddress";
-            this.lblIpAddress.Size = new System.Drawing.Size(34, 16);
+            this.lblIpAddress.Size = new System.Drawing.Size(49, 25);
             this.lblIpAddress.TabIndex = 121;
             this.lblIpAddress.Text = "N/A";
             // 
@@ -126,9 +123,11 @@
             this.groupBox1.Controls.Add(this.IPlabel);
             this.groupBox1.Controls.Add(this.IPTextBox);
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBox1.Location = new System.Drawing.Point(6, 56);
+            this.groupBox1.Location = new System.Drawing.Point(9, 86);
+            this.groupBox1.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(945, 85);
+            this.groupBox1.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.groupBox1.Size = new System.Drawing.Size(1418, 131);
             this.groupBox1.TabIndex = 171;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Login Info";
@@ -137,9 +136,11 @@
             // 
             this.groupBox2.Controls.Add(this.pictureBox2);
             this.groupBox2.Controls.Add(this.pictureBox1);
-            this.groupBox2.Location = new System.Drawing.Point(583, 17);
+            this.groupBox2.Location = new System.Drawing.Point(874, 26);
+            this.groupBox2.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(99, 48);
+            this.groupBox2.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.groupBox2.Size = new System.Drawing.Size(148, 74);
             this.groupBox2.TabIndex = 177;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Connected";
@@ -147,9 +148,10 @@
             // pictureBox2
             // 
             this.pictureBox2.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox2.Image")));
-            this.pictureBox2.Location = new System.Drawing.Point(43, 22);
+            this.pictureBox2.Location = new System.Drawing.Point(64, 34);
+            this.pictureBox2.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.pictureBox2.Name = "pictureBox2";
-            this.pictureBox2.Size = new System.Drawing.Size(16, 16);
+            this.pictureBox2.Size = new System.Drawing.Size(24, 25);
             this.pictureBox2.TabIndex = 164;
             this.pictureBox2.TabStop = false;
             this.pictureBox2.Visible = false;
@@ -157,9 +159,10 @@
             // pictureBox1
             // 
             this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
-            this.pictureBox1.Location = new System.Drawing.Point(43, 21);
+            this.pictureBox1.Location = new System.Drawing.Point(64, 32);
+            this.pictureBox1.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(16, 16);
+            this.pictureBox1.Size = new System.Drawing.Size(24, 25);
             this.pictureBox1.TabIndex = 163;
             this.pictureBox1.TabStop = false;
             // 
@@ -167,17 +170,19 @@
             // 
             this.lblLogResp.AutoSize = true;
             this.lblLogResp.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblLogResp.Location = new System.Drawing.Point(7, 62);
+            this.lblLogResp.Location = new System.Drawing.Point(10, 95);
+            this.lblLogResp.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblLogResp.Name = "lblLogResp";
-            this.lblLogResp.Size = new System.Drawing.Size(130, 16);
+            this.lblLogResp.Size = new System.Drawing.Size(181, 25);
             this.lblLogResp.TabIndex = 160;
             this.lblLogResp.Text = "Logon Response:";
             // 
             // ConnectButton
             // 
-            this.ConnectButton.Location = new System.Drawing.Point(688, 22);
+            this.ConnectButton.Location = new System.Drawing.Point(1032, 34);
+            this.ConnectButton.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.ConnectButton.Name = "ConnectButton";
-            this.ConnectButton.Size = new System.Drawing.Size(105, 39);
+            this.ConnectButton.Size = new System.Drawing.Size(158, 60);
             this.ConnectButton.TabIndex = 159;
             this.ConnectButton.Text = "Connect";
             this.ConnectButton.UseVisualStyleBackColor = true;
@@ -188,9 +193,10 @@
             // 
             this.label7.AutoSize = true;
             this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label7.Location = new System.Drawing.Point(799, 28);
+            this.label7.Location = new System.Drawing.Point(1198, 43);
+            this.label7.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(113, 16);
+            this.label7.Size = new System.Drawing.Size(161, 25);
             this.label7.TabIndex = 167;
             this.label7.Text = "Num Catalogs: ";
             this.label7.Visible = false;
@@ -199,9 +205,10 @@
             // 
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(799, 61);
+            this.label1.Location = new System.Drawing.Point(1198, 94);
+            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(46, 17);
+            this.label1.Size = new System.Drawing.Size(64, 25);
             this.label1.TabIndex = 176;
             this.label1.Text = "label1";
             this.label1.Visible = false;
@@ -210,9 +217,10 @@
             // 
             this.PWlabel.AutoSize = true;
             this.PWlabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.PWlabel.Location = new System.Drawing.Point(437, 17);
+            this.PWlabel.Location = new System.Drawing.Point(656, 26);
+            this.PWlabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.PWlabel.Name = "PWlabel";
-            this.PWlabel.Size = new System.Drawing.Size(76, 16);
+            this.PWlabel.Size = new System.Drawing.Size(106, 25);
             this.PWlabel.TabIndex = 158;
             this.PWlabel.Text = "Password";
             // 
@@ -220,9 +228,10 @@
             // 
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(799, 44);
+            this.label6.Location = new System.Drawing.Point(1198, 68);
+            this.label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(94, 16);
+            this.label6.Size = new System.Drawing.Size(133, 25);
             this.label6.TabIndex = 166;
             this.label6.Text = "Num Fields: ";
             this.label6.Visible = false;
@@ -230,67 +239,74 @@
             // PWTextBox
             // 
             this.PWTextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.PWTextBox.Location = new System.Drawing.Point(440, 35);
+            this.PWTextBox.Location = new System.Drawing.Point(660, 54);
+            this.PWTextBox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.PWTextBox.Name = "PWTextBox";
             this.PWTextBox.ReadOnly = true;
-            this.PWTextBox.Size = new System.Drawing.Size(126, 23);
+            this.PWTextBox.Size = new System.Drawing.Size(187, 30);
             this.PWTextBox.TabIndex = 157;
             // 
             // Userlabel
             // 
             this.Userlabel.AutoSize = true;
             this.Userlabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.Userlabel.Location = new System.Drawing.Point(295, 17);
+            this.Userlabel.Location = new System.Drawing.Point(442, 26);
+            this.Userlabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.Userlabel.Name = "Userlabel";
-            this.Userlabel.Size = new System.Drawing.Size(86, 16);
+            this.Userlabel.Size = new System.Drawing.Size(119, 25);
             this.Userlabel.TabIndex = 156;
             this.Userlabel.Text = "User Name";
             // 
             // UserTextBox
             // 
             this.UserTextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.UserTextBox.Location = new System.Drawing.Point(298, 35);
+            this.UserTextBox.Location = new System.Drawing.Point(447, 54);
+            this.UserTextBox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.UserTextBox.Name = "UserTextBox";
             this.UserTextBox.ReadOnly = true;
-            this.UserTextBox.Size = new System.Drawing.Size(126, 23);
+            this.UserTextBox.Size = new System.Drawing.Size(187, 30);
             this.UserTextBox.TabIndex = 155;
             // 
             // label4
             // 
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label4.Location = new System.Drawing.Point(147, 17);
+            this.label4.Location = new System.Drawing.Point(220, 26);
+            this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(36, 16);
+            this.label4.Size = new System.Drawing.Size(51, 25);
             this.label4.TabIndex = 154;
             this.label4.Text = "Port";
             // 
             // PortTextBox
             // 
             this.PortTextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.PortTextBox.Location = new System.Drawing.Point(150, 35);
+            this.PortTextBox.Location = new System.Drawing.Point(225, 54);
+            this.PortTextBox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.PortTextBox.Name = "PortTextBox";
             this.PortTextBox.ReadOnly = true;
-            this.PortTextBox.Size = new System.Drawing.Size(126, 23);
+            this.PortTextBox.Size = new System.Drawing.Size(187, 30);
             this.PortTextBox.TabIndex = 153;
             // 
             // IPlabel
             // 
             this.IPlabel.AutoSize = true;
             this.IPlabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.IPlabel.Location = new System.Drawing.Point(10, 17);
+            this.IPlabel.Location = new System.Drawing.Point(15, 26);
+            this.IPlabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.IPlabel.Name = "IPlabel";
-            this.IPlabel.Size = new System.Drawing.Size(84, 16);
+            this.IPlabel.Size = new System.Drawing.Size(118, 25);
             this.IPlabel.TabIndex = 152;
             this.IPlabel.Text = "IP Address";
             // 
             // IPTextBox
             // 
             this.IPTextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.IPTextBox.Location = new System.Drawing.Point(8, 35);
+            this.IPTextBox.Location = new System.Drawing.Point(12, 54);
+            this.IPTextBox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.IPTextBox.Name = "IPTextBox";
             this.IPTextBox.ReadOnly = true;
-            this.IPTextBox.Size = new System.Drawing.Size(126, 23);
+            this.IPTextBox.Size = new System.Drawing.Size(187, 30);
             this.IPTextBox.TabIndex = 151;
             // 
             // gbTimeOfLastDelete
@@ -298,9 +314,11 @@
             this.gbTimeOfLastDelete.Controls.Add(this.lblReceivedTime);
             this.gbTimeOfLastDelete.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.gbTimeOfLastDelete.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.gbTimeOfLastDelete.Location = new System.Drawing.Point(708, 12);
+            this.gbTimeOfLastDelete.Location = new System.Drawing.Point(1062, 18);
+            this.gbTimeOfLastDelete.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.gbTimeOfLastDelete.Name = "gbTimeOfLastDelete";
-            this.gbTimeOfLastDelete.Size = new System.Drawing.Size(260, 42);
+            this.gbTimeOfLastDelete.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.gbTimeOfLastDelete.Size = new System.Drawing.Size(390, 65);
             this.gbTimeOfLastDelete.TabIndex = 170;
             this.gbTimeOfLastDelete.TabStop = false;
             this.gbTimeOfLastDelete.Text = "Last Data Received";
@@ -311,9 +329,10 @@
             this.lblReceivedTime.BackColor = System.Drawing.Color.Black;
             this.lblReceivedTime.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblReceivedTime.ForeColor = System.Drawing.Color.Red;
-            this.lblReceivedTime.Location = new System.Drawing.Point(6, 17);
+            this.lblReceivedTime.Location = new System.Drawing.Point(9, 26);
+            this.lblReceivedTime.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblReceivedTime.Name = "lblReceivedTime";
-            this.lblReceivedTime.Size = new System.Drawing.Size(248, 20);
+            this.lblReceivedTime.Size = new System.Drawing.Size(372, 31);
             this.lblReceivedTime.TabIndex = 0;
             this.lblReceivedTime.Text = "--";
             this.lblReceivedTime.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -323,9 +342,11 @@
             this.gbTime.Controls.Add(this.timeOfDayLabel);
             this.gbTime.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.gbTime.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.gbTime.Location = new System.Drawing.Point(7, 8);
+            this.gbTime.Location = new System.Drawing.Point(10, 12);
+            this.gbTime.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.gbTime.Name = "gbTime";
-            this.gbTime.Size = new System.Drawing.Size(264, 42);
+            this.gbTime.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.gbTime.Size = new System.Drawing.Size(396, 65);
             this.gbTime.TabIndex = 169;
             this.gbTime.TabStop = false;
             this.gbTime.Text = "Current Time";
@@ -336,10 +357,10 @@
             this.timeOfDayLabel.BackColor = System.Drawing.Color.Black;
             this.timeOfDayLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.timeOfDayLabel.ForeColor = System.Drawing.Color.Red;
-            this.timeOfDayLabel.Location = new System.Drawing.Point(6, 17);
-            this.timeOfDayLabel.Margin = new System.Windows.Forms.Padding(1, 0, 1, 0);
+            this.timeOfDayLabel.Location = new System.Drawing.Point(9, 26);
+            this.timeOfDayLabel.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.timeOfDayLabel.Name = "timeOfDayLabel";
-            this.timeOfDayLabel.Size = new System.Drawing.Size(255, 20);
+            this.timeOfDayLabel.Size = new System.Drawing.Size(382, 31);
             this.timeOfDayLabel.TabIndex = 0;
             this.timeOfDayLabel.Text = "--";
             this.timeOfDayLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -347,109 +368,45 @@
             // dataGridView1
             // 
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Location = new System.Drawing.Point(36, 147);
+            this.dataGridView1.Location = new System.Drawing.Point(54, 226);
+            this.dataGridView1.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.Size = new System.Drawing.Size(915, 837);
+            this.dataGridView1.Size = new System.Drawing.Size(1372, 1360);
             this.dataGridView1.TabIndex = 173;
             this.dataGridView1.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView1_CellContentClick);
-            // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(36, 848);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(171, 39);
-            this.button1.TabIndex = 174;
-            this.button1.Text = "Get DB Table";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Visible = false;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
-            // 
-            // button2
-            // 
-            this.button2.Location = new System.Drawing.Point(97, 854);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(171, 39);
-            this.button2.TabIndex = 175;
-            this.button2.Text = "Set Symbol List";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Visible = false;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
-            // 
-            // button3
-            // 
-            this.button3.Location = new System.Drawing.Point(230, 854);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(171, 39);
-            this.button3.TabIndex = 177;
-            this.button3.Text = "Get Dow 30 Data";
-            this.button3.UseVisualStyleBackColor = true;
-            this.button3.Visible = false;
-            this.button3.Click += new System.EventHandler(this.button3_Click);
             // 
             // listBox1
             // 
             this.listBox1.FormattingEnabled = true;
             this.listBox1.HorizontalScrollbar = true;
-            this.listBox1.Location = new System.Drawing.Point(694, 147);
+            this.listBox1.ItemHeight = 20;
+            this.listBox1.Location = new System.Drawing.Point(1041, 226);
+            this.listBox1.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.listBox1.Name = "listBox1";
             this.listBox1.ScrollAlwaysVisible = true;
-            this.listBox1.Size = new System.Drawing.Size(216, 719);
+            this.listBox1.Size = new System.Drawing.Size(322, 1104);
             this.listBox1.TabIndex = 178;
-            this.listBox1.Visible = false;
             // 
             // timer1
             // 
             this.timer1.Interval = 1000;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
-            // button4
-            // 
-            this.button4.Location = new System.Drawing.Point(601, 857);
-            this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(99, 36);
-            this.button4.TabIndex = 179;
-            this.button4.Text = "Test Email";
-            this.button4.UseVisualStyleBackColor = true;
-            this.button4.Visible = false;
-            this.button4.Click += new System.EventHandler(this.button4_Click);
-            // 
             // TODTimer
             // 
             this.TODTimer.Interval = 1000;
             this.TODTimer.Tick += new System.EventHandler(this.TODTimer_Tick);
             // 
-            // button5
-            // 
-            this.button5.Location = new System.Drawing.Point(828, 856);
-            this.button5.Name = "button5";
-            this.button5.Size = new System.Drawing.Size(123, 38);
-            this.button5.TabIndex = 180;
-            this.button5.Text = "Disconnect";
-            this.button5.UseVisualStyleBackColor = true;
-            this.button5.Visible = false;
-            this.button5.Click += new System.EventHandler(this.button5_Click);
-            // 
             // button6
             // 
-            this.button6.Location = new System.Drawing.Point(708, 858);
+            this.button6.Location = new System.Drawing.Point(1113, 1192);
+            this.button6.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.button6.Name = "button6";
-            this.button6.Size = new System.Drawing.Size(109, 36);
+            this.button6.Size = new System.Drawing.Size(164, 55);
             this.button6.TabIndex = 181;
             this.button6.Text = "Pause";
             this.button6.UseVisualStyleBackColor = true;
-            this.button6.Visible = false;
             this.button6.Click += new System.EventHandler(this.button6_Click);
-            // 
-            // button7
-            // 
-            this.button7.Location = new System.Drawing.Point(424, 854);
-            this.button7.Name = "button7";
-            this.button7.Size = new System.Drawing.Size(171, 39);
-            this.button7.TabIndex = 182;
-            this.button7.Text = "Update ZipperDataFile";
-            this.button7.UseVisualStyleBackColor = true;
-            this.button7.Visible = false;
-            this.button7.Click += new System.EventHandler(this.button7_Click);
             // 
             // WatchdogTimer
             // 
@@ -461,38 +418,21 @@
             this.ResetTimer.Interval = 60000;
             this.ResetTimer.Tick += new System.EventHandler(this.ResetTimer_Tick);
             // 
-            // button8
-            // 
-            this.button8.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button8.Location = new System.Drawing.Point(56, 915);
-            this.button8.Name = "button8";
-            this.button8.Size = new System.Drawing.Size(112, 42);
-            this.button8.TabIndex = 183;
-            this.button8.Text = "Yesterday\" Close";
-            this.button8.UseVisualStyleBackColor = true;
-            this.button8.Click += new System.EventHandler(this.button8_Click);
-            // 
             // frmMain
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(994, 996);
-            this.Controls.Add(this.button8);
-            this.Controls.Add(this.button7);
+            this.ClientSize = new System.Drawing.Size(1491, 1605);
             this.Controls.Add(this.button6);
-            this.Controls.Add(this.button5);
-            this.Controls.Add(this.button4);
             this.Controls.Add(this.listBox1);
-            this.Controls.Add(this.button3);
-            this.Controls.Add(this.button2);
-            this.Controls.Add(this.button1);
             this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.groupBox5);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.gbTimeOfLastDelete);
             this.Controls.Add(this.gbTime);
+            this.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.Name = "frmMain";
-            this.Text = "TDF Dow 30  v1.31";
+            this.Text = "TDF Dow 30  v1.42";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.frmMain_FormClosing);
             this.Load += new System.EventHandler(this.frmMain_Load);
             this.groupBox5.ResumeLayout(false);
@@ -534,21 +474,14 @@
         private System.Windows.Forms.GroupBox gbTime;
         private System.Windows.Forms.Label timeOfDayLabel;
         private System.Windows.Forms.DataGridView dataGridView1;
-        private System.Windows.Forms.Button button1;
-        private System.Windows.Forms.Button button2;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Button button3;
         private System.Windows.Forms.ListBox listBox1;
         private System.Windows.Forms.Timer timer1;
-        private System.Windows.Forms.Button button4;
         private System.Windows.Forms.Timer TODTimer;
-        private System.Windows.Forms.Button button5;
         private System.Windows.Forms.Button button6;
-        private System.Windows.Forms.Button button7;
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.Timer WatchdogTimer;
         private System.Windows.Forms.Timer ResetTimer;
-        private System.Windows.Forms.Button button8;
     }
 }
 

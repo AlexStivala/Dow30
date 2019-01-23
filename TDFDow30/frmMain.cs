@@ -53,10 +53,7 @@ namespace TDFDow30
         public ushort session_ID = 0xffff;
 
 
-        //public byte[] msgBuf = new byte[5000];
-        //public Int32 msgBufLen = 0;
         public Int32[,] CatalogData = new int[150, 60];
-        //public Int16 numCat = 0;
         public string msgStr = "";
         public string XMLStr = "";
 
@@ -90,6 +87,7 @@ namespace TDFDow30
         public Stopwatch sw;
         public string dbConn = "";
         public string dbTableName = "";
+        public string dbChartTableName = "";
         public string symbolListStr = "";
         public DateTime connectTime;
         public DateTime disconnectTime;
@@ -103,16 +101,23 @@ namespace TDFDow30
         public bool debugMode = false;
         public bool timerFlag = false;
         public bool resetFlag = false;
+        public bool zipperFlag = false;
         public string spName = "";
         public DateTime timerEmailSent = DateTime.Now.AddDays(-1);
-        //public DateTime marketOpen = DateTime.Parse("09:30:00");
-        //public DateTime marketClose = DateTime.Parse("16:06:00");
+        public DateTime zipperEmailSent = DateTime.Now.AddDays(-1);
         public bool marketIsOpen = false;
         public float dowValue;
         public float nasdaqValue;
         public float spxValue;
         public Int16 chartCnt = 0;
         public Int16 chartInterval = 1;
+        public bool updateZipperFile = false;
+        public bool updateChartData = false;
+        public string spUpdateChart = "";
+
+        TimeSpan marketOpen = new TimeSpan(9, 29, 58); //9:30 am
+        TimeSpan marketClose = new TimeSpan(16, 10, 0); //4:06 pm  somtimes data is updated a bit after market close
+
 
         public class X20ChartData
         {
@@ -130,11 +135,7 @@ namespace TDFDow30
 
         public List<Dow30Database.Dow30DB.MarketHolidays> marketHolidays = new List<Dow30Database.Dow30DB.MarketHolidays>();
 
-        //ChartForm cf = new ChartForm();
-        //private readonly WindowsFormsSynchronizationContext syncContext;
-        //private readonly SynchronizationContext syncContext;
-
-
+        
         #endregion
 
         #region Collection, bindilist & variable definitions
@@ -242,10 +243,14 @@ namespace TDFDow30
 
                 dbConn = Properties.Settings.Default.dbConn;
                 dbTableName = Properties.Settings.Default.dbTableName;
+                dbChartTableName = Properties.Settings.Default.chartTableName;
                 spName = Properties.Settings.Default.spUpdate;
+                spUpdateChart = Properties.Settings.Default.spUpdateChart;
                 dynamic = Properties.Settings.Default.Dynamic;
                 zipperFilePath = Properties.Settings.Default.ZipperFilePath;
                 debugMode = Properties.Settings.Default.DebugMode;
+                updateZipperFile = Properties.Settings.Default.updateZipperFile;
+                updateChartData = Properties.Settings.Default.updateChartData;
 
 
                 disconnectTime = DateTime.Today + Properties.Settings.Default.Reset_Connection;
@@ -316,6 +321,8 @@ namespace TDFDow30
 
                 string cmd = $"SELECT * FROM MarketHolidays";
                 marketHolidays = Dow30Database.Dow30DB.GetHolidays(cmd, dbConn);
+
+                marketIsOpen = MarketOpenStatus();
 
 
                 TDFProcessingFunctions TDFproc = new TDFProcessingFunctions();
@@ -738,55 +745,7 @@ namespace TDFDow30
 
         }
 
-        private void button1_Click(object sender, EventArgs e)
-        {
-            string connection = $"SELECT * FROM {dbTableName}";
-            Dow30Data = Dow30Database.Dow30DB.GetSymbolDataCollection(connection, dbConn);
-            dataGridView1.DataSource = Dow30Data;
-        }
-
-        private void button2_Click(object sender, EventArgs e)
-        {
-            bool first = true;
-            foreach (Dow30Database.Dow30DB.Dow30symbolData sd in Dow30Data)
-            {
-                TDFGlobals.Dow30symbols.Add(sd.SubscribeSymbol);
-                if (first == false)
-                {
-                    symbolListStr += ", " + sd.SubscribeSymbol;
-                }
-                else
-                {
-                    symbolListStr += sd.SubscribeSymbol;
-                    first = false;
-                }
-
-                symbolData sd1 = new symbolData();
-                sd1.queryType = (int)QueryTypes.Portfolio_Mgr;
-                sd1.queryStr = "";
-                sd1.symbol = sd.SubscribeSymbol;
-                sd1.seqId = 5;
-                sd1.updated = DateTime.Now;
-                TDFGlobals.symbols.Add(sd1);
-            }
-            label1.Text = symbolListStr;
-        }
-
-        private void button3_Click(object sender, EventArgs e)
-        {
-            stopWatch.Start();
-            string fieldList = "trdPrc, netChg, pcntChg";
-            string query = $"SELECT {fieldList} FROM PORTFOLIO_MGR WHERE usrSymbol IN ({symbolListStr})";
-            //if (TRConnected)
-            {
-                ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
-                byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, query, TDFconstants.DATA_REQUEST, 5);
-
-                TRSendCommand(outputbuf);
-            }
-            timer1.Enabled = true;
-        }
-
+        
         public void GetDow30Data()
         {
             stopWatch.Start();
@@ -930,7 +889,8 @@ namespace TDFDow30
                     }
 
                 }
-                //UpdateZipperDataFile();
+                if (updateZipperFile)
+                    UpdateZipperDataFile();
                 //label1.Text = $"Elapsed: {ts.TotalMilliseconds.ToString()} msec";
             }
         }
@@ -1008,7 +968,7 @@ namespace TDFDow30
                 symbolData sd = new symbolData();
                 sd = TDFGlobals.symbols[i];
 
-                if (Dow30Data[i].Change != sd.netChg)
+                if (Dow30Data[i].Change != sd.netChg && sd.trdPrc != 0)
                     UpdateDB(sd);
                 if (ycls)
                 {
@@ -1102,8 +1062,9 @@ namespace TDFDow30
         
         public void UpdateChartData(X20ChartData cd)
         {
-            string cmdStr = "sp_Insert_ChartData @Updated, @Dow, @NASDAQ, @SP";
-            
+            //string cmdStr = "sp_Insert_ChartData @Updated, @Dow, @NASDAQ, @SP";
+            string cmdStr = spUpdateChart +  " @Updated, @Dow, @NASDAQ, @SP";
+
             //Save out the top-level metadata
             try
             {
@@ -1200,11 +1161,7 @@ namespace TDFDow30
             mailClient.Send(mail);
         }
 
-        private void button4_Click(object sender, EventArgs e)
-        {
-            SendEmail("[" + DateTime.Now + "] " + "TDFDow30 test message. Pleae ignore.");
-        }
-
+        
         private void frmMain_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (dynamic)
@@ -1241,7 +1198,7 @@ namespace TDFDow30
 
             lblLogResp.Text = logResp;
 
-            for (int i = 0; i< messages.Count; i++)
+            for (int i = 0; i < messages.Count; i++)
             {
                 if (debugMode)
                     listBox1.Items.Add(messages[i]);
@@ -1266,8 +1223,8 @@ namespace TDFDow30
                     todayIsHoliday = true;
             }
 
-            TimeSpan marketOpen = new TimeSpan(9, 29,58); //9:30 am
-            TimeSpan marketClose = new TimeSpan(16, 10, 0); //4:06 pm  somtimes data is updated a bit after market close
+            //TimeSpan marketOpen = new TimeSpan(9, 29,58); //9:30 am
+            //TimeSpan marketClose = new TimeSpan(16, 10, 0); //4:06 pm  somtimes data is updated a bit after market close
             TimeSpan currentTime = DateTime.Now.TimeOfDay;
 
             if (currentTime > marketOpen && currentTime < marketClose && weekday == true && todayIsHoliday == false)
@@ -1275,7 +1232,7 @@ namespace TDFDow30
 
                 if (marketIsOpen == false)
                 {
-                    string cmd = $"DELETE FROM X20ChartData";
+                    string cmd = $"DELETE FROM " + dbChartTableName;
                     int numRows;
                     numRows = Dow30Database.Dow30DB.SQLExec(cmd, dbConn);
                     string s = $"Deleted {numRows} DB chart records.";
@@ -1296,7 +1253,8 @@ namespace TDFDow30
                     X20_chartData.dow = dowValue;
                     X20_chartData.nasdaq = nasdaqValue;
                     X20_chartData.spx = spxValue;
-                    UpdateChartData(X20_chartData);
+                    if (updateChartData)
+                        UpdateChartData(X20_chartData);
 
                 }
             }
@@ -1318,13 +1276,19 @@ namespace TDFDow30
 
 
             if (resetComplete == false && resetting == false && DateTime.Now > disconnectTime)
-                ResetTDFConnection();
-            
+            {
+                ResetTDFConnection(true);
+                log.Debug("TOD timer reset.");
+
+            }
+
+            if (zipperFlag == true && DateTime.Now > zipperEmailSent.AddDays(1))
+                zipperFlag = false;
 
 
         }
 
-        public void ResetTDFConnection()
+        public void ResetTDFConnection(bool resetTime)
         {
             log.Debug("Resetting TDF Connection");
             resetting = true;
@@ -1341,7 +1305,8 @@ namespace TDFDow30
             if (TRConnected == true)
             {
                 resetComplete = true;
-                disconnectTime = disconnectTime.AddDays(1);
+                if (resetTime)
+                    disconnectTime = disconnectTime.AddDays(1);
                 refTime = refTime.AddDays(1);
                 timer1.Enabled = true;
                 log.Debug("Reset complete");
@@ -1353,6 +1318,7 @@ namespace TDFDow30
                     resetFlag = true;
                     string msg = "[" + DateTime.Now + "] TDFDow30 reset error. Failed to reconnect after timed disconnect.";
                     SendEmail(msg);
+                    log.Debug("TDFDow30 reset error. Failed to reconnect after timed disconnect.");
                 }
             }
         }
@@ -1379,12 +1345,7 @@ namespace TDFDow30
 
         }
 
-        private void button5_Click(object sender, EventArgs e)
-        {
-            ResetTDFConnection();
-            
-        }
-
+        
         private void button6_Click(object sender, EventArgs e)
         {
             timer1.Enabled = !timer1.Enabled;
@@ -1434,61 +1395,71 @@ namespace TDFDow30
 
         public void UpdateZipperDataFile()
         {
-            
-            XmlWriter xmlWriter = XmlWriter.Create(zipperFilePath + "ZipperDataFile.xml");
-            xmlWriter.WriteStartDocument();
-            xmlWriter.WriteStartElement("SYMBOLS");
-            double value;
-            string str;
-            
-            for (int i = 0; i < 3; i++)
+
+            try
             {
-            
-                xmlWriter.WriteStartElement("SYMBOL");
-                value = TDFGlobals.symbols[i].trdPrc;
-                str = TDFGlobals.symbols[i].trdPrc.ToString("#####.##");
-                //xmlWriter.WriteAttributeString("name", TDFGlobals.symbols[i].name.ToString());
-                //xmlWriter.WriteAttributeString("value", TDFGlobals.symbols[i].trdPrc.ToString("#####.##"));
-                
-                xmlWriter.WriteAttributeString("name", TDFGlobals.symbols[i].name.ToString());
-                xmlWriter.WriteAttributeString("value", str);
-                if (TDFGlobals.symbols[i].netChg > 0)
-                {
-                    value = TDFGlobals.symbols[i].netChg;
-                    str = TDFGlobals.symbols[i].netChg.ToString("#####.##");
-                    //xmlWriter.WriteAttributeString("change", TDFGlobals.symbols[i].netChg.ToString("#####.##"));
+                XmlWriter xmlWriter = XmlWriter.Create(zipperFilePath + "ZipperDataFile.xml");
+                xmlWriter.WriteStartDocument();
+                xmlWriter.WriteStartElement("SYMBOLS");
+                double value;
+                string str;
 
-                    xmlWriter.WriteAttributeString("change", str);
-                    xmlWriter.WriteAttributeString("arrow", "up.jpg");
-                }
-                else if (TDFGlobals.symbols[i].netChg < 0)
+                for (int i = 0; i < 3; i++)
                 {
-                    float absChange = Math.Abs(TDFGlobals.symbols[i].netChg);
-                    str = absChange.ToString("#####.##");
-                    //xmlWriter.WriteAttributeString("change", absChange.ToString("#####.##"));
-                    xmlWriter.WriteAttributeString("change", str);
-                    xmlWriter.WriteAttributeString("arrow", "down.jpg");
-                }
-                else if (TDFGlobals.symbols[i].netChg == 0)
-                {
-                    xmlWriter.WriteAttributeString("change", "UNCH");
+
+                    xmlWriter.WriteStartElement("SYMBOL");
+                    value = TDFGlobals.symbols[i].trdPrc;
+                    str = TDFGlobals.symbols[i].trdPrc.ToString("#####.##");
+                    //xmlWriter.WriteAttributeString("name", TDFGlobals.symbols[i].name.ToString());
+                    //xmlWriter.WriteAttributeString("value", TDFGlobals.symbols[i].trdPrc.ToString("#####.##"));
+
+                    xmlWriter.WriteAttributeString("name", TDFGlobals.symbols[i].name.ToString());
+                    xmlWriter.WriteAttributeString("value", str);
+                    if (TDFGlobals.symbols[i].netChg > 0)
+                    {
+                        value = TDFGlobals.symbols[i].netChg;
+                        str = TDFGlobals.symbols[i].netChg.ToString("#####.##");
+                        //xmlWriter.WriteAttributeString("change", TDFGlobals.symbols[i].netChg.ToString("#####.##"));
+
+                        xmlWriter.WriteAttributeString("change", str);
+                        xmlWriter.WriteAttributeString("arrow", "up.jpg");
+                    }
+                    else if (TDFGlobals.symbols[i].netChg < 0)
+                    {
+                        float absChange = Math.Abs(TDFGlobals.symbols[i].netChg);
+                        str = absChange.ToString("#####.##");
+                        //xmlWriter.WriteAttributeString("change", absChange.ToString("#####.##"));
+                        xmlWriter.WriteAttributeString("change", str);
+                        xmlWriter.WriteAttributeString("arrow", "down.jpg");
+                    }
+                    else if (TDFGlobals.symbols[i].netChg == 0)
+                    {
+                        xmlWriter.WriteAttributeString("change", "UNCH");
+                    }
+
+                    xmlWriter.WriteEndElement();
                 }
 
-                xmlWriter.WriteEndElement();
+                xmlWriter.WriteEndDocument();
+                xmlWriter.Close();
+
             }
+            catch
+            {
+                if (zipperFlag == false)
+                {
+                    zipperFlag = true;
+                    string msg = "[" + DateTime.Now + "] TDFDow30 write error. Error writing to Zipper Data File.";
+                    SendEmail(msg);
+                    zipperEmailSent = DateTime.Now;
+                    log.Debug("TDFDow30 write error. Error writing to Zipper Data File.");
+                }
 
-            xmlWriter.WriteEndDocument();
-            xmlWriter.Close();
-
+            }
+            
         }
 
-
-
-        private void button7_Click(object sender, EventArgs e)
-        {
-            UpdateZipperDataFile();
-        }
-
+        
         private void WatchdogTimer_Tick(object sender, EventArgs e)
         {
             if (timerFlag == false)
@@ -1497,21 +1468,52 @@ namespace TDFDow30
                 string msg = "[" + DateTime.Now + "] TDFDow30 response error. Data requested with no response.";
                 SendEmail(msg);
                 timerEmailSent = DateTime.Now;
-                log.Debug("TDFDow30 response error. Data requested with no response.");
                 DisconnectFromTDF();
                 ResetTimer.Enabled = true;
                 timer1.Enabled = false;
-
             }
+            log.Debug("TDFDow30 response error. Data requested with no response.");
+
         }
 
         private void ResetTimer_Tick(object sender, EventArgs e)
         {
-            ResetTDFConnection();
+            ResetTimer.Enabled = false;
+            log.Debug("Reset Timer fired.");
+            ResetTDFConnection(false);
         }
 
-        private void button8_Click(object sender, EventArgs e)
+        public bool MarketOpenStatus()
         {
+            TimeSpan currentTime = DateTime.Now.TimeOfDay;
+            DateTime timeNow = DateTime.Now;
+            bool marketOpenStat;
+
+            bool weekday;
+            if (timeNow.DayOfWeek != DayOfWeek.Saturday && timeNow.DayOfWeek != DayOfWeek.Sunday)
+                weekday = true;
+            else
+                weekday = false;
+
+            bool todayIsHoliday = false;
+
+            for (int i = 0; i < marketHolidays.Count; i++)
+            {
+                if (marketHolidays[i].holiDate == DateTime.Today)
+                    todayIsHoliday = true;
+            }
+
+            if (currentTime > marketOpen && currentTime < marketClose && weekday == true && todayIsHoliday == false)
+            {
+
+
+                marketOpenStat = true;
+                
+            }
+            else
+                marketOpenStat = false;
+
+            return marketOpenStat;
 
         }
     }

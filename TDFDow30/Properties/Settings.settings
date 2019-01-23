@@ -17,15 +17,15 @@
     <Setting Name="dbConn" Type="(Connection string)" Scope="Application">
       <DesignTimeValue Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
 &lt;SerializableConnectionString xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"&gt;
-  &lt;ConnectionString&gt;Data Source=x2-sql-pri;Initial Catalog=X20Financial_TDF;Persist Security Info=True;User ID=sa;Password=Engineer@1&lt;/ConnectionString&gt;
+  &lt;ConnectionString&gt;Data Source=10.232.77.71;Initial Catalog=X20Financial_TDF;Persist Security Info=True;User ID=X2ouser;Password=C0mpl1cat3d@1&lt;/ConnectionString&gt;
 &lt;/SerializableConnectionString&gt;</DesignTimeValue>
-      <Value Profile="(Default)">Data Source=x2-sql-pri;Initial Catalog=X20Financial_TDF;Persist Security Info=True;User ID=sa;Password=Engineer@1</Value>
+      <Value Profile="(Default)">Data Source=10.232.77.71;Initial Catalog=X20Financial_TDF;Persist Security Info=True;User ID=X2ouser;Password=C0mpl1cat3d@1</Value>
     </Setting>
     <Setting Name="Reset_Connection" Type="System.TimeSpan" Scope="Application">
       <Value Profile="(Default)">03:45:00</Value>
     </Setting>
     <Setting Name="dbTableName" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">X20FinancialDataDev</Value>
+      <Value Profile="(Default)">X20FinancialData</Value>
     </Setting>
     <Setting Name="Dynamic" Type="System.Boolean" Scope="Application">
       <Value Profile="(Default)">False</Value>
@@ -34,10 +34,22 @@
       <Value Profile="(Default)">p:\</Value>
     </Setting>
     <Setting Name="DebugMode" Type="System.Boolean" Scope="Application">
-      <Value Profile="(Default)">False</Value>
+      <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="spUpdate" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">sp_UpdateSymbolDataDev</Value>
+      <Value Profile="(Default)">sp_UpdateSymbolData</Value>
+    </Setting>
+    <Setting Name="updateZipperFile" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="updateChartData" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="chartTableName" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">X20ChartData</Value>
+    </Setting>
+    <Setting Name="spUpdateChart" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">sp_Insert_ChartData</Value>
     </Setting>
   </Settings>
 </SettingsFile>
