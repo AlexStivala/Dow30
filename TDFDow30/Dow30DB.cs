@@ -135,8 +135,7 @@ namespace Dow30Database
                         Last = Convert.ToSingle(row["Last"] ?? ""),
                         Change = Convert.ToSingle(row["Change"] ?? ""),
                         PercentChange = Convert.ToSingle(row["PercentChange"] ?? ""),
-                        Updated = Convert.ToDateTime(row["Updated"] ?? ""),
-                        
+                        Updated = Convert.ToDateTime(row["Updated"] ?? ""),                       
                     };
                     Dow30.Add(sd);
                 }
