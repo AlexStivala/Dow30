@@ -51,5 +51,8 @@
     <Setting Name="spUpdateChart" Type="System.String" Scope="Application">
       <Value Profile="(Default)">sp_Insert_ChartData</Value>
     </Setting>
+    <Setting Name="TDFServer_ID" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">1</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

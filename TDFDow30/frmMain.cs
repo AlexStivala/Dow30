@@ -115,6 +115,16 @@ namespace TDFDow30
         public bool updateChartData = false;
         public string spUpdateChart = "";
 
+        public byte mt = 0;
+        public ushort msgSize = 0;
+        public int dataLeft = 0;
+
+        public bool dataReset = false;
+        public DateTime nextServerReset;
+        public DateTime nextDailyReset;
+        int ServerID = 0;
+
+
         TimeSpan marketOpen = new TimeSpan(9, 29, 58); //9:30 am
         TimeSpan marketClose = new TimeSpan(16, 10, 0); //4:06 pm  somtimes data is updated a bit after market close
 
@@ -185,21 +195,22 @@ namespace TDFDow30
             InitializeComponent();
         }
 
-        public event EventHandler<SymbolUpdateEventArgs> SymbolDataUpdated;
+        // public event EventHandler<SymbolUpdateEventArgs> SymbolDataUpdated;
+
         //public event EventHandler<ChartLiveUpdateEventArgs> ChartDataUpdated;
         //public event EventHandler<XMLUpdateEventArgs> XMLDataUpdated;
         //public event EventHandler<ChartClosedEventArgs> ChartClosed;
 
-        protected virtual void OnSymbolDataUpdated(SymbolUpdateEventArgs e)
-        {
+        //protected virtual void OnSymbolDataUpdated(SymbolUpdateEventArgs e)
+        //{
 
-            EventHandler<SymbolUpdateEventArgs> evntH = SymbolDataUpdated;
-            if (evntH != null)
-                evntH(this, e);
+        //    EventHandler<SymbolUpdateEventArgs> evntH = SymbolDataUpdated;
+        //    if (evntH != null)
+        //        evntH(this, e);
 
 
-            //SymbolDataUpdated?.Invoke(this, e);
-        }
+        //    //SymbolDataUpdated?.Invoke(this, e);
+        //}
         /*
         protected virtual void OnChartDataUpdated(ChartLiveUpdateEventArgs e)
         {
@@ -251,18 +262,31 @@ namespace TDFDow30
                 debugMode = Properties.Settings.Default.DebugMode;
                 updateZipperFile = Properties.Settings.Default.updateZipperFile;
                 updateChartData = Properties.Settings.Default.updateChartData;
+                ServerID = Properties.Settings.Default.TDFServer_ID;
 
 
-                disconnectTime = DateTime.Today + Properties.Settings.Default.Reset_Connection;
-                if (DateTime.Now > disconnectTime)
-                    disconnectTime = disconnectTime.AddDays(1);
-                refTime = DateTime.Today.AddHours(1);
-                
-                
+                //disconnectTime = DateTime.Today + Properties.Settings.Default.Reset_Connection;
+                //if (DateTime.Now > disconnectTime)
+                //    disconnectTime = disconnectTime.AddDays(1);
+                //refTime = DateTime.Today.AddHours(1);
+
+                MarketModel.ServerReset sr = MarketFunctions.GetServerResetSched(ServerID);
+                nextServerReset = TDFConnections.GetNextServerResetTime(sr);
+                nextDailyReset = TDFConnections.GetNextDailyResetTime(sr);
+                ServerResetLabel.Text = $"Next Server Reset: {nextServerReset}";
+                DailyResetLabel.Text = $"Next Daily Reset: {nextDailyReset}";
+
+
+                IPAddress = sr.IPAddress;
+                UserName = sr.UserId;
+                PW = sr.PW;
+                Port = sr.Port.ToString();
+
                 IPTextBox.Text = IPAddress;
                 PortTextBox.Text = Port;
                 UserTextBox.Text = UserName;
                 PWTextBox.Text = PW;
+                ServerTextBox.Text = ServerID.ToString();
 
                 TDFGlobals.showAllFields = false;
 
@@ -323,10 +347,14 @@ namespace TDFDow30
                 marketHolidays = Dow30Database.Dow30DB.GetHolidays(cmd, dbConn);
 
                 marketIsOpen = MarketOpenStatus();
+                if (marketIsOpen)
+                    dataReset = false;
 
+                // Set version number
+                var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+                this.Text = String.Format("TDF Dow30 Application  Version {0}", version);
 
-                TDFProcessingFunctions TDFproc = new TDFProcessingFunctions();
-                TDFproc.sendBuf += new SendBuf(TRSendCommand);
+                TDFProcessingFunctions.sendBuf += new SendBuf(TRSendCommand);
                 TODTimer.Enabled = true;
 
                 
@@ -390,12 +418,12 @@ namespace TDFDow30
             }
             TDFProcessingFunctions TDFproc = new TDFProcessingFunctions();
 
-            TDFproc.sendBuf += new SendBuf(TRSendCommand);
+            TDFProcessingFunctions.sendBuf += new SendBuf(TRSendCommand);
             lblLogResp.Text = logResp;
-            TDFproc.GetCataloger();
+            TDFProcessingFunctions.GetCataloger();
             //label7.Text = "Num Catalogs: " + numCat.ToString();
 
-            TDFproc.GetFieldInfoTable();
+            TDFProcessingFunctions.GetFieldInfoTable();
             System.Threading.Thread.Sleep(1000);
             Int32 cnt = 0;
 
@@ -413,7 +441,7 @@ namespace TDFDow30
             // get data from db table to get symbol list
             string connection = $"SELECT * FROM {dbTableName}";
             Dow30Data = Dow30Database.Dow30DB.GetSymbolDataCollection(connection, dbConn);
-            dataGridView1.DataSource = Dow30Data;
+            symbolDataGrid.DataSource = Dow30Data;
 
             System.Threading.Thread.Sleep(1000);
 
@@ -441,7 +469,7 @@ namespace TDFDow30
                     sd1.queryType = (int)QueryTypes.Portfolio_Mgr;
                 sd1.queryStr = "";
                 sd1.symbol = sd.SubscribeSymbol;
-                sd1.name = sd.DisplayName.ToUpper();
+                sd1.company_Name = sd.DisplayName.ToUpper();
                 sd1.seqId = 5;
                 sd1.updated = DateTime.Now;
                 TDFGlobals.symbols.Add(sd1);
@@ -475,234 +503,563 @@ namespace TDFDow30
 
             }
         }
-        
+
         #region Socket Handlers
         // Handler for data received back from TRclientsocket
         private void TRDataReceived(ClientSocket sender, byte[] data)
         {
-            // receive the data and determine the type
-            int bufLen = sender.bufLen;
-            rCnt++;
-            bytesReceived = bytesReceived + bufLen;
-            byte[] rData = new byte[bufLen];
-            Array.Copy(data, 0, rData, 0, bufLen);
-            TRdata.AddRange(rData);
-            bool waitForData = false;
-            byte mt = 0;
-            ushort msgSize = 0;
 
-            dataReceivedTime = DateTime.Now;
+            TDFDataReceived(sender, data);
+        }
 
-            ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
-            itf_Parser_Return_Message TRmessage = new itf_Parser_Return_Message();
-            itf_Parser_Update_Message TRupdateMessage = new itf_Parser_Update_Message();
-            TDFProcessingFunctions TDFproc = new TDFProcessingFunctions();
-            TDFproc.sendBuf += new SendBuf(TRSendCommand);
-
-            int dataLeft = TRdata.Count;
-
-            while (dataLeft > 0 && waitForData == false)
+        private void TDFDataReceived(ClientSocket sender, byte[] data)
+        {
+            try
             {
-                mt = itfHeaderAccess.GetMsgType(TRdata.ToArray());
-                msgSize = itfHeaderAccess.GetMsgSize(TRdata.ToArray());
+                // receive the data and determine the type
+                int bufLen = sender.bufLen;
+                rCnt++;
+                bytesReceived += bufLen;
+                byte[] rData = new byte[bufLen];
+                Array.Copy(data, 0, rData, 0, bufLen);
+                TRdata.AddRange(rData);
+                //TRdata.AddRange(data);
+                bool waitForData = false;
+                bool dynamicFlag = false;
+                int len = 0;
+                mt = 0;
+                msgSize = 0;
 
-                //TRmessage = itfHeaderAccess.ParseItfMessage(TRdata.ToArray());
-                //if (TRmessage.itf_Header.msgSize <= dataLeft)
-                if (msgSize <= dataLeft)
+                dataLeft = TRdata.Count;
+                dataReceivedTime = DateTime.Now;
+
+                TDFProcessingFunctions TDFproc = new TDFProcessingFunctions();
+
+                while (dataLeft >= 23 && waitForData == false)
                 {
+                    ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
+                    itf_Parser_Return_Message TRmessage = new itf_Parser_Return_Message();
+                    itf_Parser_Update_Message TRupdateMessage = new itf_Parser_Update_Message();
+                    itf_Control_Message TRControlMessage = new itf_Control_Message();
 
-                    if (mt == TDFconstants.DYNAMIC_UPDATE)
+                    mt = itfHeaderAccess.GetMsgType(TRdata.ToArray());
+                    msgSize = itfHeaderAccess.GetMsgSize(TRdata.ToArray());
+
+                    if (msgSize <= dataLeft)
                     {
-                        TRupdateMessage = itfHeaderAccess.ParseItfUpdateMessage(TRdata.ToArray());
-                        TDFproc.ProcessFinancialUpdateData(TRupdateMessage);
-                        TRdata.RemoveRange(0, msgSize + 1);
-                        dataLeft = TRdata.Count;
-                    }
-                    else if (mt == TDFconstants.LOGOFF_RESPONSE)
-                    {
-                        logResp = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
-                        messages.Add("Logoff at " + DateTime.Now.ToString());
-                        TRdata.Clear();
-                        dataLeft = TRdata.Count;
-                        loggedIn = false;
-
-                    }
-                    else if (mt == TDFconstants.KEEP_ALIVE_REQUEST)
-                    {
-                        string ka = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
-                        statusStr = "Keep Alive at " + DateTime.Now.ToString() + " 1 " + ka;
-                        messages.Add(statusStr);
-
-                        TDFproc.ProcessKeepAliveRequest(TRmessage);
-                        //TRdata.Clear();
-                        if (TRdata.Count >= msgSize + 1)
-                            TRdata.RemoveRange(0, msgSize + 1);
-                        else
-                            TRdata.RemoveRange(0, TRdata.Count);
-
-                        dataLeft = TRdata.Count;
-
-                    }
-                    else
-                    {
-                        if (TRdata[0] == 2)
-                            TRmessage = itfHeaderAccess.ParseItfMessage(TRdata.ToArray());
-                        else
-                            return;
-                        if (TRmessage.itf_Header.msgType == TDFconstants.KEEP_ALIVE_REQUEST)
+                        if (mt == TDFconstants.DYNAMIC_UPDATE)
                         {
-                            logResp = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
-                            TDFproc.ProcessKeepAliveRequest(TRmessage);
-                            int TRdataLen = TRdata.Count;
-                            if (TRmessage.itf_Header.msgSize + 1 > TRdataLen)
-                                TRdata.RemoveRange(0, TRdataLen);
-                            else
-                                TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize + 1);
+                            try
+                            {
+                                TRupdateMessage = itfHeaderAccess.ParseItfUpdateMessage(TRdata.ToArray());
+                                if (msgSize <= TRupdateMessage.totalMessageSize)
+                                    TDFproc.ProcessFinancialUpdateData(TRupdateMessage);
+                                //Task.Run(() => TDFproc.ProcessFinancialUpdateData(TRupdateMessage));
+                                if (msgSize + 1 >= TRdata.Count)
+                                    len = TRdata.Count;
+                                else
+                                    len = msgSize + 1;
+                                //TRdata.RemoveRange(0, msgSize + 1);
+                                TRdata.RemoveRange(0, len);
+                                dataLeft = TRdata.Count;
+                                dynamicFlag = true;
+                            }
+                            catch (Exception ex)
+                            {
+                                log.Error($"Dynamic Update error: {ex}");
+                            }
+                        }
+                        else if (mt == TDFconstants.DYNAMIC_CONTROL)
+                        {
+
+                            TRControlMessage = itfHeaderAccess.ParseItfControlMessage(TRdata.ToArray());
+                            log.Info($"Control Message Code: {TRControlMessage.control_Message_Header.messageCode}");
+                            TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize + 1);
                             dataLeft = TRdata.Count;
                         }
-
-
-
-                        switch (TRmessage.data_Header.respType)
+                        else if (mt == TDFconstants.LOGOFF_RESPONSE)
                         {
-                            case TDFconstants.SUCCCESSFUL_LOGON_LOGOFF:
-                                numLog++;
-                                logResp = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray()) + "    numLog: " + numLog.ToString();
-                                messages.Add(logResp);
-                                loggedIn = true;
-                                // get and save session ID
-                                stdHeadr.sessionId = TRmessage.itf_Header.sessionId;
-                                rCnt = 0;
-                                bytesReceived = 0;
-                                TRdata.Clear();
-                                dataLeft = TRdata.Count;
-                                break;
+                            TRmessage = itfHeaderAccess.ParseItfMessage(TRdata.ToArray());
+                            logResp = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
+                            messages.Add("Logoff at " + DateTime.Now.ToString());
+                            log.Info(logResp);
+                            TRdata.Clear();
+                            dataLeft = TRdata.Count;
+                            loggedIn = false;
 
-                            case TDFconstants.CATALOGER_RESPONSE:
-                                catStr = TDFproc.ProcessCataloger(TRmessage.Message.ToArray());
-                                TRdata.Clear();
-                                dataLeft = TRdata.Count;
-                                break;
+                            switch (TRmessage.data_Header.respType)
+                            {
+                                case TDFconstants.SUCCCESSFUL_LOGON_LOGOFF:
+                                    log.Info("Logoff " + logResp);
+                                    break;
 
-                            case TDFconstants.OPEN_FID_RESPONSE:
-                                if (TRmessage.itf_Header.seqId == 98)
-                                {
-                                    TDFproc.ProcessFieldInfoTable(TRmessage);
-                                    TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize + 1);
-                                    dataLeft = TRdata.Count;
-                                }
-                                //else if (TRmessage.itf_Header.seqId < 10)
-                                else
-                                {
-                                    TDFproc.ProcessFinancialData(TRmessage);
-                                    TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize + 1);
-                                    dataLeft = TRdata.Count;
-                                    stopWatch.Start();
-                                    // Get the elapsed time as a TimeSpan value.
-                                    ts = stopWatch.Elapsed;
-                                    stopWatch.Reset();
-                                    WatchdogTimer.Enabled = false;
+                                case TDFconstants.ERROR_LOGON_LOGOFF:
+                                    log.Info("Logoff Error " + logResp);
+                                    break;
+                            }
+                        }
+                        else if (mt == TDFconstants.LOGON_RESPONSE)
+                        {
+                            TRmessage = itfHeaderAccess.ParseItfMessage(TRdata.ToArray());
+                            logResp = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
+                            messages.Add("Logon at " + DateTime.Now.ToString());
+                            TRdata.Clear();
+                            dataLeft = TRdata.Count;
 
-                                }
-                                break;
+                            switch (TRmessage.data_Header.respType)
+                            {
+                                case TDFconstants.SUCCCESSFUL_LOGON_LOGOFF:
+                                    // get and save session ID
+                                    stdHeadr.sessionId = TRmessage.itf_Header.sessionId;
+                                    log.Info("Logon at " + DateTime.Now.ToString());
+                                    log.Info(logResp);
+                                    loggedIn = true;
+                                    break;
 
-                            case TDFconstants.SUBSCRIPTION_RESPONSE:
-                                //if (TRmessage.itf_Header.seqId == 101)
-                                {
-                                    TDFproc.ProcessFinancialData(TRmessage);
-                                    TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize + 1);
-                                    dataLeft = TRdata.Count;
-                                }
-                                break;
-
-
-                            case TDFconstants.UNSUBSCRIPTION_RESPONSE:
-                                statusStr = "Unsubscribed at " + DateTime.Now.ToString();
-                                TRdata.RemoveRange(0, msgSize + 1);
-                                dataLeft = TRdata.Count;
-                                break;
-
-
-                            case TDFconstants.XML_RESPONSE:
-                                XMLStr = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
-                                MemoryStream ms = new MemoryStream(TRmessage.Message.ToArray());
-                                xmlResponse.Load(ms);
-                                XMLUpdateEventArgs xmldu = new XMLUpdateEventArgs();
-                                xmldu.XML = XMLStr;
-                                //XMLUpdateEventArgs xmlduc = new XMLUpdateEventArgs();
-                                //xmlduc.XML = XMLStr;
-                                //OnXMLDataUpdated(xmlduc);
-                                //OnXMLDataUpdated(xmldu);
-                                break;
-
-                            case TDFconstants.XML_CHART_RESPONSE:
-                                XMLStr += System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
-
-                                PreProXML xmlData = TDFproc.GetXmlType(TRmessage);
-
-
-                                switch (xmlData.xmlCode)
-                                {
-                                    case XMLTypes.XMLCharts:
-                                        Chart_Data chart1Data = new Chart_Data();
-                                        chart1Data = TDFproc.ProcessXMLChartData(xmlData);
-                                        charts.Add(chart1Data);
-                                        sw.Stop();
-                                        break;
-
-                                    case XMLTypes.marketPages:
-                                        marketPage = TDFproc.ProcessMarketPages(xmlData);
-                                        pageDataFlag = true;
-                                        break;
-
-                                    case XMLTypes.bpPages:
-                                        marketPage = TDFproc.ProcessBusinessPages(xmlData);
-                                        pageDataFlag = true;
-                                        break;
-
-                                }
-
-
-
-                                TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize + 1);
-                                dataLeft = TRdata.Count;
-                                break;
-
-
-                            case TDFconstants.KEEP_ALIVE_REQUEST:
-                                string ka = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
-                                statusStr = "Keep Alive at " + DateTime.Now.ToString() + " 2 " + ka;
-                                TDFproc.ProcessKeepAliveRequest(TRmessage);
-                                TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize);
-                                dataLeft = TRdata.Count;
-                                statusStr = "Keep Alive at " + DateTime.Now.ToString();
-                                messages.Add(statusStr);
-                                break;
-
-                            default:
-                                statusStr = "Message type " + TRmessage.itf_Header.msgType.ToString() +
-                                    "  Message Response " + TRmessage.data_Header.respType.ToString() + "  " + DateTime.Now.ToString();
-
-                                TRdata.RemoveRange(0, msgSize + 1);
-                                dataLeft = TRdata.Count;
-                                break;
+                                case TDFconstants.ERROR_LOGON_LOGOFF:
+                                    log.Info("Logon Error " + logResp);
+                                    loggedIn = false;
+                                    break;
+                            }
 
                         }
+                        else if (mt == TDFconstants.KEEP_ALIVE_REQUEST)
+                        {
+                            try
+                            {
+                                string ka = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
+                                statusStr = "Keep Alive at " + DateTime.Now.ToString() + " 1 " + ka;
+                                messages.Add(statusStr);
+                                log.Info(statusStr);
 
+                                ProcessKeepAliveRequest(TRmessage);
+                                if (TRdata.Count >= msgSize + 1)
+                                    TRdata.RemoveRange(0, msgSize + 1);
+                                else
+                                    TRdata.RemoveRange(0, TRdata.Count);
+
+                                dataLeft = TRdata.Count;
+                            }
+                            catch (Exception ex)
+                            {
+                                log.Error($"KEEP ALIVE REQUEST error: {ex}");
+                            }
+                        }
+                        else if (mt == TDFconstants.DATA_RESPONSE)
+                        {
+                            try
+                            {
+                                TRmessage = itfHeaderAccess.ParseItfMessage(TRdata.ToArray());
+                                switch (TRmessage.data_Header.respType)
+                                {
+
+                                    case TDFconstants.CATALOGER_RESPONSE:
+                                        catStr = TDFproc.ProcessCataloger(TRmessage.Message.ToArray());
+                                        TRdata.Clear();
+                                        dataLeft = TRdata.Count;
+                                        break;
+
+                                    case TDFconstants.OPEN_FID_RESPONSE:
+                                        if (TRmessage.itf_Header.seqId == 98)
+                                        {
+                                            TDFproc.ProcessFieldInfoTable(TRmessage);
+                                            TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize + 1);
+                                            dataLeft = TRdata.Count;
+                                        }
+                                        else
+                                        {
+                                            TDFproc.ProcessFinancialData(TRmessage);
+                                            TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize + 1);
+                                            dataLeft = TRdata.Count;
+                                            WatchdogTimer.Enabled = false;
+                                        }
+                                        break;
+
+                                    case TDFconstants.SUBSCRIPTION_RESPONSE:
+                                        TDFproc.ProcessFinancialData(TRmessage);
+                                        TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize + 1);
+                                        dataLeft = TRdata.Count;
+                                        break;
+
+                                    case TDFconstants.UNSUBSCRIPTION_RESPONSE:
+                                        TRdata.RemoveRange(0, msgSize + 1);
+                                        dataLeft = TRdata.Count;
+                                        break;
+
+                                    case TDFconstants.XML_RESPONSE:
+                                        XMLStr = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
+                                        MemoryStream ms = new MemoryStream(TRmessage.Message.ToArray());
+                                        xmlResponse.Load(ms);
+                                        break;
+
+                                    case TDFconstants.XML_CHART_RESPONSE:
+                                        XMLStr += System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
+                                        PreProXML xmlData = TDFproc.GetXmlType(TRmessage);
+
+                                        switch (xmlData.xmlCode)
+                                        {
+                                            case XMLTypes.XMLCharts:
+                                                Chart_Data chart1Data = new Chart_Data();
+                                                chart1Data = TDFproc.ProcessXMLChartData(xmlData);
+                                                charts.Add(chart1Data);
+                                                sw.Stop();
+                                                break;
+
+                                            case XMLTypes.marketPages:
+                                                marketPage = TDFproc.ProcessMarketPages(xmlData);
+                                                pageDataFlag = true;
+                                                break;
+
+                                            case XMLTypes.bpPages:
+                                                marketPage = TDFproc.ProcessBusinessPages(xmlData);
+                                                pageDataFlag = true;
+                                                break;
+                                        }
+
+                                        TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize + 1);
+                                        dataLeft = TRdata.Count;
+                                        break;
+
+                                    case TDFconstants.KEEP_ALIVE_REQUEST:
+                                        string ka = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
+                                        statusStr = "Keep Alive at " + DateTime.Now.ToString() + " 2 " + ka;
+                                        TDFProcessingFunctions.ProcessKeepAliveRequest(TRmessage);
+                                        TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize);
+                                        dataLeft = TRdata.Count;
+                                        statusStr = "Keep Alive at " + DateTime.Now.ToString();
+                                        messages.Add(statusStr);
+                                        break;
+
+                                    default:
+                                        statusStr = "Message type " + TRmessage.itf_Header.msgType.ToString() +
+                                            "  Message Response " + TRmessage.data_Header.respType.ToString() + "  " + DateTime.Now.ToString();
+
+                                        log.Error(statusStr);
+
+                                        TRdata.RemoveRange(0, msgSize + 1);
+                                        dataLeft = TRdata.Count;
+                                        break;
+
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                log.Error($"DATA_RESPONSE error: {ex}");
+                            }
+                        }
+                        else
+                        {
+                            if (TRdata[0] == 2)
+                                TRmessage = itfHeaderAccess.ParseItfMessage(TRdata.ToArray());
+                            else
+                            {
+                                log.Error("--- Sync byte not found!");
+
+
+                                /*
+                                TRdata.Clear();
+                                dataLeft = TRdata.Count;
+
+                                log.Debug("--- Receive buffer cleared!");
+                                */
+
+
+
+                                int n = 0;
+                                while (TRdata[0] != 2 && TRdata.Count > 0)
+                                {
+                                    TRdata.RemoveRange(0, 1);
+                                    n++;
+                                }
+
+                                log.Debug($"--- {n} Bytes removed!");
+
+
+                                //if (TRdata.Count > 0)
+                                //TRmessage = itfHeaderAccess.ParseItfMessage(TRdata.ToArray());
+                                //return;
+                            }
+                            /*
+                            if (TRmessage.itf_Header.msgType == TDFconstants.KEEP_ALIVE_REQUEST)
+                            {
+                                cmdResp = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
+                                //TDFProcessingFunctions TDFproc = new TDFProcessingFunctions();
+                                TDFproc.ProcessKeepAliveRequest(TRmessage);
+                                int TRdataLen = TRdata.Count;
+                                if (TRmessage.itf_Header.msgSize + 1 > TRdataLen)
+                                    TRdata.RemoveRange(0, TRdataLen);
+                                else
+                                    TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize + 1);
+                                dataLeft = TRdata.Count;
+                            }
+                            */
+                        }
                     }
+                    else
+                        waitForData = true;
+
                 }
-                else
-                    waitForData = true;
+
+                if (dynamicFlag)
+                {
+                    dynamicFlag = false;
+                    //Task.Run(() => UpdateDynamicSymbols());
+                    //UpdateDynamicSymbols();
+                }
 
             }
+            catch (Exception ex)
+            {
+                log.Error($"TRDataReceived error - {ex}");
+            }
+        }
 
-            // Log if debug mode
-            //log.Debug("Command data received from source MSE: " + data);
-            //TDFProcessingFunctions.SetSymbolData(fin_Data,)
+        public void ProcessKeepAliveRequest(itf_Parser_Return_Message TRmess)
+        {
+            try
+            {
+                // Build Logon Message
+                string queryStr = System.Text.Encoding.Default.GetString(TRmess.Message.ToArray());
+
+                ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
+                byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, queryStr, TDFconstants.KEEP_ALIVE_RESPONSE, 0);
+                TRSendCommand(outputbuf);
+                //sendBuf(outputbuf);
+            }
+            catch (Exception ex)
+            {
+                log.Error($"Process KEEP ALIVE REQUEST error: {ex}");
+            }
         }
 
 
 
+        /*
+    private void TRDataReceived(ClientSocket sender, byte[] data)
+    {
+        // receive the data and determine the type
+        int bufLen = sender.bufLen;
+        rCnt++;
+        bytesReceived = bytesReceived + bufLen;
+        byte[] rData = new byte[bufLen];
+        Array.Copy(data, 0, rData, 0, bufLen);
+        TRdata.AddRange(rData);
+        bool waitForData = false;
+        byte mt = 0;
+        ushort msgSize = 0;
+
+        dataReceivedTime = DateTime.Now;
+
+        ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
+        itf_Parser_Return_Message TRmessage = new itf_Parser_Return_Message();
+        itf_Parser_Update_Message TRupdateMessage = new itf_Parser_Update_Message();
+        TDFProcessingFunctions TDFproc = new TDFProcessingFunctions();
+        TDFProcessingFunctions.sendBuf += new SendBuf(TRSendCommand);
+
+        int dataLeft = TRdata.Count;
+
+        while (dataLeft > 0 && waitForData == false)
+        {
+            mt = itfHeaderAccess.GetMsgType(TRdata.ToArray());
+            msgSize = itfHeaderAccess.GetMsgSize(TRdata.ToArray());
+
+            //TRmessage = itfHeaderAccess.ParseItfMessage(TRdata.ToArray());
+            //if (TRmessage.itf_Header.msgSize <= dataLeft)
+            if (msgSize <= dataLeft)
+            {
+
+                if (mt == TDFconstants.DYNAMIC_UPDATE)
+                {
+                    TRupdateMessage = itfHeaderAccess.ParseItfUpdateMessage(TRdata.ToArray());
+                    TDFproc.ProcessFinancialUpdateData(TRupdateMessage);
+                    TRdata.RemoveRange(0, msgSize + 1);
+                    dataLeft = TRdata.Count;
+                }
+                else if (mt == TDFconstants.LOGOFF_RESPONSE)
+                {
+                    logResp = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
+                    messages.Add("Logoff at " + DateTime.Now.ToString());
+                    TRdata.Clear();
+                    dataLeft = TRdata.Count;
+                    loggedIn = false;
+
+                }
+                else if (mt == TDFconstants.KEEP_ALIVE_REQUEST)
+                {
+                    string ka = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
+                    statusStr = "Keep Alive at " + DateTime.Now.ToString() + " 1 " + ka;
+                    messages.Add(statusStr);
+
+                    TDFProcessingFunctions.ProcessKeepAliveRequest(TRmessage);
+                    //TRdata.Clear();
+                    if (TRdata.Count >= msgSize + 1)
+                        TRdata.RemoveRange(0, msgSize + 1);
+                    else
+                        TRdata.RemoveRange(0, TRdata.Count);
+
+                    dataLeft = TRdata.Count;
+
+                }
+                else
+                {
+                    if (TRdata[0] == 2)
+                        TRmessage = itfHeaderAccess.ParseItfMessage(TRdata.ToArray());
+                    else
+                        return;
+                    if (TRmessage.itf_Header.msgType == TDFconstants.KEEP_ALIVE_REQUEST)
+                    {
+                        logResp = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
+                        TDFProcessingFunctions.ProcessKeepAliveRequest(TRmessage);
+                        int TRdataLen = TRdata.Count;
+                        if (TRmessage.itf_Header.msgSize + 1 > TRdataLen)
+                            TRdata.RemoveRange(0, TRdataLen);
+                        else
+                            TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize + 1);
+                        dataLeft = TRdata.Count;
+                    }
+
+
+
+                    switch (TRmessage.data_Header.respType)
+                    {
+                        case TDFconstants.SUCCCESSFUL_LOGON_LOGOFF:
+                            numLog++;
+                            logResp = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray()) + "    numLog: " + numLog.ToString();
+                            messages.Add(logResp);
+                            loggedIn = true;
+                            // get and save session ID
+                            stdHeadr.sessionId = TRmessage.itf_Header.sessionId;
+                            rCnt = 0;
+                            bytesReceived = 0;
+                            TRdata.Clear();
+                            dataLeft = TRdata.Count;
+                            break;
+
+                        case TDFconstants.CATALOGER_RESPONSE:
+                            catStr = TDFproc.ProcessCataloger(TRmessage.Message.ToArray());
+                            TRdata.Clear();
+                            dataLeft = TRdata.Count;
+                            break;
+
+                        case TDFconstants.OPEN_FID_RESPONSE:
+                            if (TRmessage.itf_Header.seqId == 98)
+                            {
+                                TDFproc.ProcessFieldInfoTable(TRmessage);
+                                TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize + 1);
+                                dataLeft = TRdata.Count;
+                            }
+                            //else if (TRmessage.itf_Header.seqId < 10)
+                            else
+                            {
+                                TDFproc.ProcessFinancialData(TRmessage);
+                                TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize + 1);
+                                dataLeft = TRdata.Count;
+                                stopWatch.Start();
+                                // Get the elapsed time as a TimeSpan value.
+                                ts = stopWatch.Elapsed;
+                                stopWatch.Reset();
+                                WatchdogTimer.Enabled = false;
+
+                            }
+                            break;
+
+                        case TDFconstants.SUBSCRIPTION_RESPONSE:
+                            //if (TRmessage.itf_Header.seqId == 101)
+                            {
+                                TDFproc.ProcessFinancialData(TRmessage);
+                                TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize + 1);
+                                dataLeft = TRdata.Count;
+                            }
+                            break;
+
+
+                        case TDFconstants.UNSUBSCRIPTION_RESPONSE:
+                            statusStr = "Unsubscribed at " + DateTime.Now.ToString();
+                            TRdata.RemoveRange(0, msgSize + 1);
+                            dataLeft = TRdata.Count;
+                            break;
+
+
+                        case TDFconstants.XML_RESPONSE:
+                            XMLStr = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
+                            MemoryStream ms = new MemoryStream(TRmessage.Message.ToArray());
+                            xmlResponse.Load(ms);
+                            XMLUpdateEventArgs xmldu = new XMLUpdateEventArgs();
+                            xmldu.XML = XMLStr;
+                            //XMLUpdateEventArgs xmlduc = new XMLUpdateEventArgs();
+                            //xmlduc.XML = XMLStr;
+                            //OnXMLDataUpdated(xmlduc);
+                            //OnXMLDataUpdated(xmldu);
+                            break;
+
+                        case TDFconstants.XML_CHART_RESPONSE:
+                            XMLStr += System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
+
+                            PreProXML xmlData = TDFproc.GetXmlType(TRmessage);
+
+
+                            switch (xmlData.xmlCode)
+                            {
+                                case XMLTypes.XMLCharts:
+                                    Chart_Data chart1Data = new Chart_Data();
+                                    chart1Data = TDFproc.ProcessXMLChartData(xmlData);
+                                    charts.Add(chart1Data);
+                                    sw.Stop();
+                                    break;
+
+                                case XMLTypes.marketPages:
+                                    marketPage = TDFproc.ProcessMarketPages(xmlData);
+                                    pageDataFlag = true;
+                                    break;
+
+                                case XMLTypes.bpPages:
+                                    marketPage = TDFproc.ProcessBusinessPages(xmlData);
+                                    pageDataFlag = true;
+                                    break;
+
+                            }
+
+
+
+                            TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize + 1);
+                            dataLeft = TRdata.Count;
+                            break;
+
+
+                        case TDFconstants.KEEP_ALIVE_REQUEST:
+                            string ka = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
+                            statusStr = "Keep Alive at " + DateTime.Now.ToString() + " 2 " + ka;
+                            TDFProcessingFunctions.ProcessKeepAliveRequest(TRmessage);
+                            TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize);
+                            dataLeft = TRdata.Count;
+                            statusStr = "Keep Alive at " + DateTime.Now.ToString();
+                            messages.Add(statusStr);
+                            break;
+
+                        default:
+                            statusStr = "Message type " + TRmessage.itf_Header.msgType.ToString() +
+                                "  Message Response " + TRmessage.data_Header.respType.ToString() + "  " + DateTime.Now.ToString();
+
+                            TRdata.RemoveRange(0, msgSize + 1);
+                            dataLeft = TRdata.Count;
+                            break;
+
+                    }
+
+                }
+            }
+            else
+                waitForData = true;
+
+        }
+
+        // Log if debug mode
+        //log.Debug("Command data received from source MSE: " + data);
+        //TDFProcessingFunctions.SetSymbolData(fin_Data,)
+    }
+
+
+    */
 
         // Handler for source & destination MSE connection status change
         public void TRConnectionStatusChanged(ClientSocket sender, ClientSocket.ConnectionStatus status)
@@ -867,10 +1224,10 @@ namespace TDFDow30
 
                 string connection = $"SELECT * FROM {dbTableName}";
                 Dow30Data = Dow30Database.Dow30DB.GetSymbolDataCollection(connection, dbConn);
-                dataGridView1.DataSource = Dow30Data;
-                dataGridView1.ClearSelection();
+                symbolDataGrid.DataSource = Dow30Data;
+                symbolDataGrid.ClearSelection();
 
-                foreach (DataGridViewRow row in dataGridView1.Rows)
+                foreach (DataGridViewRow row in symbolDataGrid.Rows)
                 {
                     if (Convert.ToSingle(row.Cells[5].Value) < 0)
                     {
@@ -963,10 +1320,13 @@ namespace TDFDow30
 
         public void UpdateAllSymbols(bool ycls)
         {
-            for(int i = 0; i < TDFGlobals.symbols.Count; i++)
+            int nZeros = 0;
+            for (int i = 0; i < TDFGlobals.symbols.Count; i++)
             {
                 symbolData sd = new symbolData();
                 sd = TDFGlobals.symbols[i];
+                if (marketIsOpen == false && sd.netChg == 0.0 && dataReset == false)
+                    nZeros++;
 
                 if (Dow30Data[i].Change != sd.netChg && sd.trdPrc != 0)
                     UpdateDB(sd);
@@ -990,8 +1350,14 @@ namespace TDFDow30
                         spxValue = sd.trdPrc;
 
                 }
-
             }
+            if (nZeros > TDFGlobals.symbols.Count - 6 && dataReset == false)
+            {
+                log.Debug($"Data reset at: {DateTime.Now}");
+                DataResetLabel.Text = $"Data reset at: {DateTime.Now}";
+                dataReset = true;
+            }
+
         }
 
 
@@ -1267,6 +1633,30 @@ namespace TDFDow30
             if (timerFlag == true && DateTime.Now > timerEmailSent.AddDays(1))
                 timerFlag = false;
 
+            // if server is scheduled for reset - Get next time for both resets
+            if (DateTime.Now > nextServerReset)
+            {
+                WatchdogTimer.Enabled = false;
+                MarketModel.ServerReset sr = MarketFunctions.GetServerResetSched(ServerID);
+                nextServerReset = TDFConnections.GetNextServerResetTime(sr);
+                nextDailyReset = TDFConnections.GetNextDailyResetTime(sr);
+                ServerResetLabel.Text = $"Next Server Reset: {nextServerReset}";
+                DailyResetLabel.Text = $"Next Daily Reset: {nextDailyReset}";
+
+                TDFConnections.ServerReset(true);
+            }
+
+            if (DateTime.Now > nextDailyReset)
+            {
+                MarketModel.ServerReset sr = MarketFunctions.GetServerResetSched(ServerID);
+                nextDailyReset = TDFConnections.GetNextDailyResetTime(sr);
+                DailyResetLabel.Text = $"Next Daily Reset: {nextDailyReset}";
+
+                TDFConnections.ServerReset(false);
+            }
+
+
+            /*
             if (resetFlag == true && DateTime.Now > refTime)
                 resetFlag = false;
 
@@ -1281,6 +1671,7 @@ namespace TDFDow30
                 log.Debug("TOD timer reset.");
 
             }
+            */
 
             if (zipperFlag == true && DateTime.Now > zipperEmailSent.AddDays(1))
                 zipperFlag = false;
@@ -1413,7 +1804,7 @@ namespace TDFDow30
                     //xmlWriter.WriteAttributeString("name", TDFGlobals.symbols[i].name.ToString());
                     //xmlWriter.WriteAttributeString("value", TDFGlobals.symbols[i].trdPrc.ToString("#####.##"));
 
-                    xmlWriter.WriteAttributeString("name", TDFGlobals.symbols[i].name.ToString());
+                    xmlWriter.WriteAttributeString("name", TDFGlobals.symbols[i].company_Name.ToString());
                     xmlWriter.WriteAttributeString("value", str);
                     if (TDFGlobals.symbols[i].netChg > 0)
                     {
@@ -1514,6 +1905,16 @@ namespace TDFDow30
                 marketOpenStat = false;
 
             return marketOpenStat;
+
+        }
+
+        private void label15_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void ServerTextBox_TextChanged(object sender, EventArgs e)
+        {
 
         }
     }

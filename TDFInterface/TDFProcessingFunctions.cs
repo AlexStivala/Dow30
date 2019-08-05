@@ -5,18 +5,26 @@ using System.IO;
 using System.IO.Compression;
 using System.Xml;
 using System.Globalization;
+using log4net;
+using System.Threading;
+using AsyncClientSocket;
 
 namespace TDFInterface
 {
     public delegate void SendBuf(byte[] outbuf);
-
+    
     public class TDFProcessingFunctions
     {
         
         public static string XMLStr = "";
         public static XmlDocument xmlResponse = new XmlDocument();
+        public pageData marketPage = new pageData();
         public static Chart_Data ch = new Chart_Data();
-        public SendBuf sendBuf;
+        public static SendBuf sendBuf;
+        public static List<Chart_Data> charts = new List<Chart_Data>();
+
+        public const string quot = "\"";
+        public const string term = "\0";
 
         public static itf_Header stdHeadr = new itf_Header()
         {
@@ -29,9 +37,45 @@ namespace TDFInterface
             dataOffset = TDFconstants.DATA_OFFSET
         };
 
-        #region Processing functions
+
+        #region Logger instantiation - uses reflection to get module name
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        #endregion
+
+        #region Logging & status setup
+        // This method used to implement IAppender interface from log4net; to support custom appends to status strip
+        public void DoAppend(log4net.Core.LoggingEvent loggingEvent)
+        {
+            // Set text on status bar only if logging level is DEBUG or ERROR
+            if ((loggingEvent.Level.Name == "ERROR") | (loggingEvent.Level.Name == "DEBUG"))
+            {
+                //toolStripStatusLabel.BackColor = System.Drawing.Color.Red;
+                //toolStripStatusLabel.Text = String.Format("Error Logging Message: {0}: {1}", loggingEvent.Level.Name, loggingEvent.MessageObject.ToString());
+            }
+            else
+            {
+                //toolStripStatusLabel.BackColor = System.Drawing.Color.SpringGreen;
+                //toolStripStatusLabel.Text = String.Format("Status Logging Message: {0}: {1}", loggingEvent.Level.Name, loggingEvent.MessageObject.ToString());
+            }
+        }
+        #endregion
 
 
+        #region Chart and XML related functions
+
+
+        public static MemoryStream Decompress(MemoryStream compressedXML)
+        {
+
+            //Decompress                
+            var bigStream = new GZipStream(compressedXML, CompressionMode.Decompress);
+            var bigStreamOut = new System.IO.MemoryStream();
+            bigStream.CopyTo(bigStreamOut);
+            return bigStreamOut;
+
+        }
+
+        // Pre Process XML Data 
         public PreProXML GetXmlType(itf_Parser_Return_Message ChartData)
         {
 
@@ -65,10 +109,11 @@ namespace TDFInterface
 
             xmlData.hdrVals = hdrVals;
             string encode;
-            hdrVals.TryGetValue("CONTENT-ENCODING", out encode);
+            bool encodeSpecified = false;
+            encodeSpecified = hdrVals.TryGetValue("CONTENT-ENCODING", out encode);
 
             // check if compressed
-            if (encode.Trim() == "GZIP")
+            if (encodeSpecified && encode.Trim() == "GZIP")
             {
                 // compressed using gzip compression
                 MemoryStream compressed = new MemoryStream(ChartData.Message.ToArray());
@@ -109,6 +154,11 @@ namespace TDFInterface
             {
                 XmlCode = XMLTypes.bpPages;
             }
+            else if (XmlResponseType == "marketStatistics")
+            {
+                XmlCode = XMLTypes.marketStatistics;
+            }
+
             else
             {
                 XmlCode = XMLTypes.Unknown;
@@ -120,6 +170,7 @@ namespace TDFInterface
             return xmlData;
         }
 
+        // Process Market Pulse Pages
         public pageData ProcessMarketPages(PreProXML marketPage)
         {
             XmlDocument mpData = new XmlDocument();
@@ -254,6 +305,7 @@ namespace TDFInterface
             return marketPageData;
         }
 
+        // Process Business Pulse Pages
         public pageData ProcessBusinessPages(PreProXML marketPage)
         {
             XmlDocument mpData = new XmlDocument();
@@ -390,6 +442,146 @@ namespace TDFInterface
             return marketPageData;
         }
 
+        public pageData ProcessMarketStatistics(PreProXML marketPage)
+        {
+            XmlDocument mpData = new XmlDocument();
+            pageData marketPageData = new pageData();
+            string fieldName;
+            string val;
+            int rowNum = 0;
+            int colNum = 0;
+            mpData.LoadXml(marketPage.xmlStr);
+            XmlNodeList def = mpData.GetElementsByTagName("definition");
+
+            foreach (XmlNode hdr in def)
+            {
+                //fieldName = "code";
+                val = hdr.ChildNodes[0].InnerText;
+                //cols.Add(fieldName, val);
+                string s = val;
+                marketPageData.pageCode = val;
+
+                //fieldName = "exch";
+                val = hdr.ChildNodes[1].InnerText;
+                //cols.Add(fieldName, val);
+                s += "," + val;
+
+                //fieldName = "curr";
+                val = hdr.ChildNodes[2].InnerText;
+                //cols.Add(fieldName, val);
+                s += "," + val;
+
+                //fieldName = "sess";
+                val = hdr.ChildNodes[3].InnerText;
+                //cols.Add(fieldName, val);
+                s += "," + val;
+
+                //fieldName = "dataState";
+                val = hdr.ChildNodes[4].InnerText;
+                s += "," + val;
+
+                //fieldName = "pageType";
+                val = hdr.ChildNodes[5].InnerText;
+                s += "," + val;
+
+                marketPageData.headerInfo = s;
+
+            }
+
+            XmlNodeList header = mpData.GetElementsByTagName("header");
+
+            foreach (XmlNode hdr in header)
+            {
+                //fieldName = "title";
+                val = hdr.ChildNodes[0].InnerText;
+                //cols.Add(fieldName, val);
+                string s = val;
+
+                //fieldName = "subTitle";
+                val = hdr.ChildNodes[1].InnerText;
+                //cols.Add(fieldName, val);
+                s += "," + val;
+
+                //fieldName = "dateTime";
+                val = hdr.ChildNodes[2].InnerText;
+                //cols.Add(fieldName, val);
+                s += "," + val;
+
+                marketPageData.title = s;
+
+            }
+
+
+            XmlNodeList nodelistR = mpData.GetElementsByTagName("row");
+            foreach (XmlNode row in nodelistR)
+            {
+                bool skip = false;
+                colNum = 0;
+                Dictionary<string, string> cols = new Dictionary<string, string>();
+
+                XmlNodeList nodelistC = row.ChildNodes;
+                foreach (XmlNode col in nodelistC)
+                {
+                    {
+                        if (colNum == 0 && col.Attributes.Count == 0)
+                        {
+                            fieldName = "symbol";
+                            val = col.ChildNodes[0].InnerText;
+                            string s = val;
+
+
+                            if (col.ChildNodes.Count > 1)
+                            {
+                                //"exch"
+                                val = col.ChildNodes[1].InnerText;
+                                s += "," + val;
+                            }
+
+                            if (col.ChildNodes.Count > 2)
+                            {
+                                //"curr"
+                                val = col.ChildNodes[2].InnerText;
+                                s += "," + val;
+                            }
+
+                            if (col.ChildNodes.Count > 3)
+                            {
+                                //"sess"
+                                val = col.ChildNodes[3].InnerText;
+                                s += "," + val;
+                            }
+
+                            if (col.ChildNodes.Count > 4)
+                            {
+                                //"dataState"
+                                val = col.ChildNodes[4].InnerText;
+                                s += "," + val;
+                            }
+
+
+                            cols.Add(fieldName, s);
+                            marketPageData.symbols.Add(s);
+
+                        }
+                        else
+                        {
+                            val = col.ChildNodes[0].InnerText;
+                            fieldName = col.ChildNodes[0].Name;
+                            cols.Add(fieldName, val);
+                        }
+
+
+                    }
+                    colNum++;
+                }
+                if (rowNum > 0 && skip == false)
+                    marketPageData.rows.Add(cols);
+                rowNum++;
+
+
+            }
+            return marketPageData;
+        }
 
         public Chart_Data ProcessXMLChartData(PreProXML ChartData)
         {
@@ -412,11 +604,25 @@ namespace TDFInterface
             string fieldName = "";
             string fieldLabel = "";
             string XmlResponseType = "";
+            string version = "";
+
             CultureInfo provider = CultureInfo.InvariantCulture;
 
             XmlNode root = xmlResponse.FirstChild;
             XmlNode nextNode = root.NextSibling;
             XmlResponseType = nextNode.Name;
+
+            XmlNodeList nodelistH = xmlResponse.GetElementsByTagName("Header");
+            foreach (XmlNode ts in nodelistH)
+            {
+                if (ts?.Attributes["version"] != null)
+                    version = ts.Attributes.GetNamedItem("version").Value ?? "n/a";
+                if (ts?.Attributes["id"] != null)
+                    Chart1.id = ts.Attributes.GetNamedItem("id").Value ?? "n/a";
+
+            }
+
+            TDFGlobals.seqIdsrecd[Convert.ToInt32(Chart1.id)] = true;
 
 
             XmlNodeList nodelistS = xmlResponse.GetElementsByTagName("Security");
@@ -513,6 +719,13 @@ namespace TDFInterface
                         h = nm.Attributes.GetNamedItem("h").Value;
                         XmlNodeList nDChild = nm.ChildNodes;
 
+                        if (nDChild.Count <= 0)
+                        {
+                            ApplicationException newEx = new ApplicationException("Number of data points = 0.");
+                            throw newEx;
+                        }
+
+
                         foreach (XmlNode d in nDChild)
                         {
                             Chart_DP cdp = new Chart_DP();
@@ -525,27 +738,37 @@ namespace TDFInterface
                                 cdp.p3 = d.Attributes.GetNamedItem("p3").Value;
                                 cdp.p4 = d.Attributes.GetNamedItem("p4").Value;
                                 cdp.p5 = d.Attributes.GetNamedItem("p5").Value;
+                                cdp.halted = d.Attributes.GetNamedItem("halted").Value;
                                 cdp.close = cdp.p4;
-
                                 string dt = y1.Substring(4, 2) + "/" + y1.Substring(6, 2) + "/" + y1.Substring(0, 4) + " " + h + ":" + m + ":00";
 
-                                cdp.timestamp = DateTime.Parse(dt);
-                                Chart1.dataPts.Add(cdp);
-                                if (float.Parse(cdp.p2) > Chart1.dataHi)
-                                {
-                                    Chart1.dataHi = float.Parse(cdp.p2);
-                                    Chart1.dateHi = cdp.timestamp;
-                                }
-                                if (float.Parse(cdp.p3) < Chart1.dataLo)
-                                {
-                                    Chart1.dataLo = float.Parse(cdp.p3);
-                                    Chart1.dateLo = cdp.timestamp;
-                                }
 
+                                if (cdp.close != "0.0")
+                                {
+
+                                    cdp.timestamp = DateTime.Parse(dt);
+                                    Chart1.dataPts.Add(cdp);
+                                    if (float.Parse(cdp.p2) > Chart1.dataHi)
+                                    {
+                                        Chart1.dataHi = float.Parse(cdp.p2);
+                                        Chart1.dateHi = cdp.timestamp;
+                                    }
+                                    if (float.Parse(cdp.p3) < Chart1.dataLo && float.Parse(cdp.p3) > 0.0f)
+                                    {
+                                        Chart1.dataLo = float.Parse(cdp.p3);
+                                        Chart1.dateLo = cdp.timestamp;
+                                    }
+                                }
+                                else
+                                {
+                                    string error = $"Zero detcected at {dt}";
+                                }
                             }
                             catch
                             {
                                 nHol++;
+                                string dt = y1.Substring(4, 2) + "/" + y1.Substring(6, 2) + "/" + y1.Substring(0, 4) + " " + h + ":" + m + ":00";
+
                             }
 
                         }
@@ -570,6 +793,12 @@ namespace TDFInterface
                         m1 = nm.Attributes.GetNamedItem("m").Value;
                         XmlNodeList nDChild = nm.ChildNodes;
 
+                        if (nDChild.Count <= 0)
+                        {
+                            ApplicationException newEx = new ApplicationException("Number of data points = 0.");
+                            throw newEx;
+                        }
+
                         foreach (XmlNode d in nDChild)
                         {
                             Chart_DP cdp = new Chart_DP();
@@ -584,25 +813,38 @@ namespace TDFInterface
                                 cdp.p3 = d.Attributes.GetNamedItem("p3").Value;
                                 cdp.p4 = d.Attributes.GetNamedItem("p4").Value;
                                 cdp.p5 = d.Attributes.GetNamedItem("p5").Value;
+                                //cdp.halted = d.Attributes.GetNamedItem("halted").Value;
                                 cdp.close = cdp.p5;
 
                                 string dt = m1 + "/" + cdp.d + "/" + y1 + " 16:00:00";
-                                cdp.timestamp = DateTime.Parse(dt);
-                                Chart1.dataPts.Add(cdp);
-                                if (float.Parse(cdp.p3) > Chart1.dataHi)
+
+                                if (cdp.close != "0.0")
                                 {
-                                    Chart1.dataHi = float.Parse(cdp.p3);
-                                    Chart1.dateHi = cdp.timestamp;
+                                    cdp.timestamp = DateTime.Parse(dt);
+                                    Chart1.dataPts.Add(cdp);
+                                    if (float.Parse(cdp.p3) > Chart1.dataHi)
+                                    {
+                                        Chart1.dataHi = float.Parse(cdp.p3);
+                                        Chart1.dateHi = cdp.timestamp;
+                                    }
+                                    if (float.Parse(cdp.p4) < Chart1.dataLo && float.Parse(cdp.p4) > 0.0f)
+                                    {
+                                        Chart1.dataLo = float.Parse(cdp.p4);
+                                        Chart1.dateLo = cdp.timestamp;
+                                    }
                                 }
-                                if (float.Parse(cdp.p4) < Chart1.dataLo)
+                                else
                                 {
-                                    Chart1.dataLo = float.Parse(cdp.p4);
-                                    Chart1.dateLo = cdp.timestamp;
+                                    string error = $"Zero detcected at {dt}";
                                 }
                             }
-                            catch
+                            catch (Exception ex)
                             {
                                 nHol++;
+                                //string dt = m1 + "/" + cdp.d + "/" + y1;
+                                string dt = $"Holiday: {m1}/{cdp.d}/{y1}";
+                                //holidays.Add(dt);
+                                string err = "Error: " + ex;
                             }
 
                         }
@@ -639,22 +881,30 @@ namespace TDFInterface
                             cdp.p3 = nm.Attributes.GetNamedItem("p3").Value;
                             cdp.p4 = nm.Attributes.GetNamedItem("p4").Value;
                             cdp.p5 = nm.Attributes.GetNamedItem("p5").Value;
+                            //cdp.halted = nm.Attributes.GetNamedItem("halted").Value;
                             cdp.close = cdp.p5;
 
                             string dt = m1 + "/" + d1 + "/" + y1 + " 16:00:00";
-                            cdp.timestamp = DateTime.Parse(dt);
-                            Chart1.dataPts.Add(cdp);
-                            if (float.Parse(cdp.p3) > Chart1.dataHi)
-                            {
-                                Chart1.dataHi = float.Parse(cdp.p3);
-                                Chart1.dateHi = cdp.timestamp;
-                            }
-                            if (float.Parse(cdp.p4) < Chart1.dataLo)
-                            {
-                                Chart1.dataLo = float.Parse(cdp.p4);
-                                Chart1.dateLo = cdp.timestamp;
-                            }
 
+                            if (cdp.close != "0.0")
+                            {
+                                cdp.timestamp = DateTime.Parse(dt);
+                                Chart1.dataPts.Add(cdp);
+                                if (float.Parse(cdp.p3) > Chart1.dataHi)
+                                {
+                                    Chart1.dataHi = float.Parse(cdp.p3);
+                                    Chart1.dateHi = cdp.timestamp;
+                                }
+                                if (float.Parse(cdp.p4) < Chart1.dataLo && float.Parse(cdp.p4) > 0.0f)
+                                {
+                                    Chart1.dataLo = float.Parse(cdp.p4);
+                                    Chart1.dateLo = cdp.timestamp;
+                                }
+                            }
+                            else
+                            {
+                                string error = $"Zero detcected at {dt}";
+                            }
                         }
                         catch
                         {
@@ -697,22 +947,30 @@ namespace TDFInterface
                             cdp.p3 = nm.Attributes.GetNamedItem("p3").Value;
                             cdp.p4 = nm.Attributes.GetNamedItem("p4").Value;
                             cdp.p5 = nm.Attributes.GetNamedItem("p5").Value;
+                            //cdp.halted = nm.Attributes.GetNamedItem("halted").Value;
                             cdp.close = cdp.p5;
 
                             string dt = m1 + "/" + d1 + "/" + y1 + " 16:00:00";
-                            cdp.timestamp = DateTime.Parse(dt);
-                            Chart1.dataPts.Add(cdp);
-                            if (float.Parse(cdp.p3) > Chart1.dataHi)
-                            {
-                                Chart1.dataHi = float.Parse(cdp.p3);
-                                Chart1.dateHi = cdp.timestamp;
-                            }
-                            if (float.Parse(cdp.p4) < Chart1.dataLo)
-                            {
-                                Chart1.dataLo = float.Parse(cdp.p4);
-                                Chart1.dateLo = cdp.timestamp;
-                            }
 
+                            if (cdp.close != "0.0")
+                            {
+                                cdp.timestamp = DateTime.Parse(dt);
+                                Chart1.dataPts.Add(cdp);
+                                if (float.Parse(cdp.p3) > Chart1.dataHi)
+                                {
+                                    Chart1.dataHi = float.Parse(cdp.p3);
+                                    Chart1.dateHi = cdp.timestamp;
+                                }
+                                if (float.Parse(cdp.p4) < Chart1.dataLo)
+                                {
+                                    Chart1.dataLo = float.Parse(cdp.p4);
+                                    Chart1.dateLo = cdp.timestamp;
+                                }
+                            }
+                            else
+                            {
+                                string error = $"Zero detcected at {dt}";
+                            }
 
                         }
                         catch
@@ -729,18 +987,254 @@ namespace TDFInterface
             ch = Chart1;
             return Chart1;
         }
+        #endregion
 
-        public static MemoryStream Decompress(MemoryStream compressedXML)
+        #region TDF Processing functions
+
+        public void TDFDataReceived(AsyncClientSocket.ClientSocket sender, byte[] data)
         {
+            try
+            {
+                // receive the data and determine the type
+                int bufLen = sender.bufLen;
+                byte[] rData = new byte[bufLen];
+                Array.Copy(data, 0, rData, 0, bufLen);
+                TDFGlobals.TRdata.AddRange(rData);
+                bool waitForData = false;
+                int len = 0;
+                int mt = 0;
+                int msgSize = 0;
 
-            //Decompress                
-            var bigStream = new GZipStream(compressedXML, CompressionMode.Decompress);
-            var bigStreamOut = new System.IO.MemoryStream();
-            bigStream.CopyTo(bigStreamOut);
-            return bigStreamOut;
+                TDFGlobals.dataLeft = TDFGlobals.TRdata.Count;
+                TDFProcessingFunctions TDFproc = new TDFProcessingFunctions();
 
+                while (TDFGlobals.dataLeft >= 23 && waitForData == false)
+                {
+                    ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
+                    itf_Parser_Return_Message TRmessage = new itf_Parser_Return_Message();
+                    itf_Parser_Update_Message TRupdateMessage = new itf_Parser_Update_Message();
+                    itf_Control_Message TRControlMessage = new itf_Control_Message();
+
+                    mt = itfHeaderAccess.GetMsgType(TDFGlobals.TRdata.ToArray());
+                    msgSize = itfHeaderAccess.GetMsgSize(TDFGlobals.TRdata.ToArray());
+
+                    if (msgSize <= TDFGlobals.dataLeft)
+                    {
+                        if (mt == TDFconstants.DYNAMIC_UPDATE)
+                        {
+                            try
+                            {
+                                TRupdateMessage = itfHeaderAccess.ParseItfUpdateMessage(TDFGlobals.TRdata.ToArray());
+                                if (msgSize <= TRupdateMessage.totalMessageSize)
+                                    TDFproc.ProcessFinancialUpdateData(TRupdateMessage);
+                                if (msgSize + 1 >= TDFGlobals.TRdata.Count)
+                                    len = TDFGlobals.TRdata.Count;
+                                else
+                                    len = msgSize + 1;
+                                TDFGlobals.TRdata.RemoveRange(0, len);
+                                TDFGlobals.dataLeft = TDFGlobals.TRdata.Count;
+                            }
+                            catch (Exception ex)
+                            {
+                                log.Error($"Dynamic Update error: {ex}");
+                            }
+                        }
+                        else if (mt == TDFconstants.DYNAMIC_CONTROL)
+                        {
+
+                            TRControlMessage = itfHeaderAccess.ParseItfControlMessage(TDFGlobals.TRdata.ToArray());
+                            log.Info($"Control Message Code: {TRControlMessage.control_Message_Header.messageCode}");
+                            TDFGlobals.TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize + 1);
+                            TDFGlobals.dataLeft = TDFGlobals.TRdata.Count;
+                        }
+                        else if (mt == TDFconstants.LOGOFF_RESPONSE)
+                        {
+                            TRmessage = itfHeaderAccess.ParseItfMessage(TDFGlobals.TRdata.ToArray());
+                            TDFGlobals.logResp = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
+                            log.Info(TDFGlobals.logResp);
+                            TDFGlobals.TRdata.Clear();
+                            TDFGlobals.dataLeft = TDFGlobals.TRdata.Count;
+                            TDFGlobals.loggedIn = false;
+
+                            switch (TRmessage.data_Header.respType)
+                            {
+                                case TDFconstants.SUCCCESSFUL_LOGON_LOGOFF:
+                                    log.Info("Logoff " + TDFGlobals.logResp);
+                                    break;
+
+                                case TDFconstants.ERROR_LOGON_LOGOFF:
+                                    log.Info("Logoff Error " + TDFGlobals.logResp);
+                                    break;
+                            }
+                        }
+                        else if (mt == TDFconstants.LOGON_RESPONSE)
+                        {
+                            TRmessage = itfHeaderAccess.ParseItfMessage(TDFGlobals.TRdata.ToArray());
+                            TDFGlobals.logResp = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
+                            TDFGlobals.TRdata.Clear();
+                            TDFGlobals.dataLeft = TDFGlobals.TRdata.Count;
+
+                            switch (TRmessage.data_Header.respType)
+                            {
+                                case TDFconstants.SUCCCESSFUL_LOGON_LOGOFF:
+                                    // get and save session ID
+                                    stdHeadr.sessionId = TRmessage.itf_Header.sessionId;
+                                    log.Info("Logon at " + DateTime.Now.ToString());
+                                    log.Info(TDFGlobals.logResp);
+                                    TDFGlobals.loggedIn = true;
+                                    break;
+
+                                case TDFconstants.ERROR_LOGON_LOGOFF:
+                                    log.Info("Logon Error " + TDFGlobals.logResp);
+                                    TDFGlobals.loggedIn = false;
+                                    break;
+                            }
+
+                        }
+                        else if (mt == TDFconstants.KEEP_ALIVE_REQUEST)
+                        {
+                            try
+                            {
+                                string ka = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
+                                log.Info("Keep Alive at " + DateTime.Now.ToString() + " 1 " + ka);
+
+                                ProcessKeepAliveRequest(TRmessage);
+                                if (TDFGlobals.TRdata.Count >= msgSize + 1)
+                                    TDFGlobals.TRdata.RemoveRange(0, msgSize + 1);
+                                else
+                                    TDFGlobals.TRdata.RemoveRange(0, TDFGlobals.TRdata.Count);
+
+                                TDFGlobals.dataLeft = TDFGlobals.TRdata.Count;
+                            }
+                            catch (Exception ex)
+                            {
+                                log.Error($"KEEP ALIVE REQUEST error: {ex}");
+                            }
+                        }
+                        else if (mt == TDFconstants.DATA_RESPONSE)
+                        {
+                            try
+                            {
+                                TRmessage = itfHeaderAccess.ParseItfMessage(TDFGlobals.TRdata.ToArray());
+                                switch (TRmessage.data_Header.respType)
+                                {
+
+                                    case TDFconstants.CATALOGER_RESPONSE:
+                                        TDFGlobals.catStr = TDFproc.ProcessCataloger(TRmessage.Message.ToArray());
+                                        TDFGlobals.TRdata.Clear();
+                                        TDFGlobals.dataLeft = TDFGlobals.TRdata.Count;
+                                        break;
+
+                                    case TDFconstants.OPEN_FID_RESPONSE:
+                                        if (TRmessage.itf_Header.seqId == 98)
+                                        {
+                                            TDFproc.ProcessFieldInfoTable(TRmessage);
+                                            TDFGlobals.TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize + 1);
+                                            TDFGlobals.dataLeft = TDFGlobals.TRdata.Count;
+                                        }
+                                        else
+                                        {
+                                            TDFproc.ProcessFinancialData(TRmessage);
+                                            TDFGlobals.TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize + 1);
+                                            TDFGlobals.dataLeft = TDFGlobals.TRdata.Count;
+                                            TDFGlobals.seqIdsrecd[TRmessage.itf_Header.seqId] = true;
+
+                                        }
+                                        break;
+
+                                    case TDFconstants.SUBSCRIPTION_RESPONSE:
+                                        TDFproc.ProcessFinancialData(TRmessage);
+                                        TDFGlobals.TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize + 1);
+                                        TDFGlobals.dataLeft = TDFGlobals.TRdata.Count;
+                                        break;
+
+                                    case TDFconstants.UNSUBSCRIPTION_RESPONSE:
+                                        TDFGlobals.TRdata.RemoveRange(0, msgSize + 1);
+                                        TDFGlobals.dataLeft = TDFGlobals.TRdata.Count;
+                                        break;
+
+                                    case TDFconstants.XML_RESPONSE:
+                                        XMLStr = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
+                                        MemoryStream ms = new MemoryStream(TRmessage.Message.ToArray());
+                                        xmlResponse.Load(ms);
+                                        break;
+
+                                    case TDFconstants.XML_CHART_RESPONSE:
+                                        XMLStr += System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
+                                        PreProXML xmlData = TDFproc.GetXmlType(TRmessage);
+
+                                        switch (xmlData.xmlCode)
+                                        {
+                                            case XMLTypes.XMLCharts:
+                                                Chart_Data chart1Data = new Chart_Data();
+                                                chart1Data = TDFproc.ProcessXMLChartData(xmlData);
+                                                charts.Add(chart1Data);
+                                                break;
+
+                                            case XMLTypes.marketPages:
+                                                marketPage = TDFproc.ProcessMarketPages(xmlData);
+                                                TDFGlobals.pageDataFlag = true;
+                                                break;
+
+                                            case XMLTypes.bpPages:
+                                                marketPage = TDFproc.ProcessBusinessPages(xmlData);
+                                                TDFGlobals.pageDataFlag = true;
+                                                break;
+                                        }
+
+                                        TDFGlobals.TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize + 1);
+                                        TDFGlobals.dataLeft = TDFGlobals.TRdata.Count;
+                                        break;
+
+                                    case TDFconstants.KEEP_ALIVE_REQUEST:
+                                        string ka = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
+                                        TDFProcessingFunctions.ProcessKeepAliveRequest(TRmessage);
+                                        TDFGlobals.TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize);
+                                        TDFGlobals.dataLeft = TDFGlobals.TRdata.Count;
+                                        break;
+
+                                    default:
+                                        log.Error($"Message type: {TRmessage.itf_Header.msgType}  Message Response: {TRmessage.data_Header.respType} {DateTime.Now}");
+                                        TDFGlobals.TRdata.RemoveRange(0, msgSize + 1);
+                                        TDFGlobals.dataLeft = TDFGlobals.TRdata.Count;
+                                        break;
+
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                log.Error($"DATA_RESPONSE error: {ex}");
+                            }
+                        }
+                        else
+                        {
+                            if (TDFGlobals.TRdata[0] == 2)
+                                TRmessage = itfHeaderAccess.ParseItfMessage(TDFGlobals.TRdata.ToArray());
+                            else
+                            {
+                                log.Error("--- Sync byte not found!");
+
+                                int n = 0;
+                                while (TDFGlobals.TRdata[0] != 2 && TDFGlobals.TRdata.Count > 0)
+                                {
+                                    TDFGlobals.TRdata.RemoveRange(0, 1);
+                                    n++;
+                                }
+
+                                log.Debug($"--- {n} Bytes removed!");
+                            }
+                        }
+                    }
+                    else
+                        waitForData = true;
+                }
+                UpdateSymbols();
+            }
+            catch (Exception ex)
+            {
+                log.Error($"TRDataReceived error - {ex}");
+            }
         }
-
         public List<string> ProcessCataloger(byte[] catalog)
         {
             List<string> s = new List<string>();
@@ -772,7 +1266,23 @@ namespace TDFInterface
             }
             return s;
         }
-        
+        public static ushort GetCatalogNumFIDS(ushort patternNo)
+        {
+            bool done = false;
+            ushort i = 0;
+
+            while (done == false)
+            {
+                if (TDFGlobals.CatalogData[patternNo - 1, i] == 0)
+                {
+                    done = true;
+                }
+                i++;
+            }
+            i--;
+            return i;
+        }
+
         public void ProcessFieldInfoTable(itf_Parser_Return_Message TRmess)
         {
             local_Cataloger lCat = new local_Cataloger();
@@ -949,113 +1459,7 @@ namespace TDFInterface
         }
 
 
-        public static int GetSymbolIndx(string sym)
-        {
-            int indx = -1;
-            for (int i = 0; i < TDFGlobals.symbols.Count; i++)
-            {
-                if (TDFGlobals.symbols[i].symbol == sym)
-                    indx = i;
-            }
-            if (indx < 0)
-            {
-                indx = 0;
-            }
-            return indx;
-        }
-        
-        public static void SetSymbolData(List<fin_Data> f, int i, int symIndx)
-        {
-            TDFGlobals.symbols[symIndx].symbolFull = f[i].symbolFull;
-            if (f[i].show)
-            {
-                switch (f[i].dataIndx)
-                {
-                    case 0:
-                        TDFGlobals.symbols[symIndx].trdPrc = f[i].fData;
-                        break;
-                    case 1:
-                        TDFGlobals.symbols[symIndx].netChg = f[i].fData;
-                        break;
-                    case 2:
-                        TDFGlobals.symbols[symIndx].ycls = f[i].fData;
-                        break;
-                    case 3:
-                        TDFGlobals.symbols[symIndx].pcntChg = f[i].fData;
-                        break;
-                    case 4:
-                        TDFGlobals.symbols[symIndx].hi = f[i].fData;
-                        break;
-                    case 5:
-                        TDFGlobals.symbols[symIndx].lo = f[i].fData;
-                        break;
-                    case 6:
-                        TDFGlobals.symbols[symIndx].annHi = f[i].fData;
-                        break;
-                    case 7:
-                        TDFGlobals.symbols[symIndx].annLo = f[i].fData;
-                        break;
-                    case 8:
-                        TDFGlobals.symbols[symIndx].cumVol = f[i].iData;
-                        break;
-                    case 9:
-                        TDFGlobals.symbols[symIndx].peRatio = f[i].fData;
-                        break;
-                    case 10:
-                        TDFGlobals.symbols[symIndx].eps = f[i].fData;
-                        break;
-                    case 11:
-                        TDFGlobals.symbols[symIndx].ask = f[i].fData;
-                        break;
-                    case 12:
-                        TDFGlobals.symbols[symIndx].bid = f[i].fData;
-                        break;
-                    case 13:
-                        TDFGlobals.symbols[symIndx].lastActivity = f[i].fData;
-                        break;
-                    case 14:
-                        TDFGlobals.symbols[symIndx].lastActivityNetChg = f[i].fData;
-                        break;
-                    case 15:
-                        TDFGlobals.symbols[symIndx].lastActivityPcntChg = f[i].fData;
-                        break;
-                    case 16:
-                        TDFGlobals.symbols[symIndx].divAnn = f[i].fData;
-                        break;
-                    case 17:
-                        TDFGlobals.symbols[symIndx].intRate = f[i].fData;
-                        break;
-                    case 18:
-                        TDFGlobals.symbols[symIndx].bidYld = f[i].fData;
-                        break;
-                    case 19:
-                        TDFGlobals.symbols[symIndx].bidNetChg = f[i].fData;
-                        break;
-                    case 20:
-                        TDFGlobals.symbols[symIndx].askYld = f[i].fData;
-                        break;
-                    case 21:
-                        TDFGlobals.symbols[symIndx].bidYldNetChg = f[i].fData;
-                        break;
-                    case 22:
-                        TDFGlobals.symbols[symIndx].yrClsPrc = f[i].fData;
-                        break;
-                    case 23:
-                        TDFGlobals.symbols[symIndx].monthClsPrc = f[i].fData;
-                        break;
-                    case 24:
-                        TDFGlobals.symbols[symIndx].mktCap = f[i].fData;
-                        break;
 
-                }
-                SymbolUpdateEventArgs sduea = new SymbolUpdateEventArgs();
-                sduea.symbolUpdate = TDFGlobals.symbols[symIndx];
-                //OnSymbolDataUpdated(sduea);
-
-            }
-        }
-
-        
         public static local_Cataloger GetLocalCatalog(byte[] catalog)
         {
             local_Cataloger lCat = new local_Cataloger();
@@ -1083,11 +1487,31 @@ namespace TDFInterface
             return lCat;
         }
 
+        public static void GetCataloger()
+        {
+            // Build Logon Message
+            string queryStr = "SELECT * FROM CATALOGER_TABLE";
+
+            ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
+            byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, queryStr, TDFconstants.DATA_REQUEST, 99);
+            //TRSendCommand(outputbuf);
+            sendBuf(outputbuf);
+        }
+        public static void GetFieldInfoTable()
+        {
+            // Build Logon Message
+            string queryStr = "SELECT * FROM FIELD_INFO_TABLE";
+
+            ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
+            byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, queryStr, TDFconstants.DATA_REQUEST, 98);
+            //TRSendCommand(outputbuf);
+            sendBuf(outputbuf);
+        }
 
         public void ProcessFinancialData(itf_Parser_Return_Message TRmess)
         {
-            byte[] rData = new byte[TRmess.Message.Count];
-            rData = TRmess.Message.ToArray();
+            //byte[] rData = new byte[TRmess.Message.Count];
+            byte[] rData = TRmess.Message.ToArray();
             fin_Data fin = new fin_Data();
             string s = "";
             UInt32 fidIndx = 0;
@@ -1107,6 +1531,7 @@ namespace TDFInterface
                 Open_FID_Hdr h = new Open_FID_Hdr();
                 h = Decode_OpenFID_Header(OPenFIDHdr);
 
+                
                 if (h.symBol == true)
                 {
                     // get Symbol
@@ -1116,12 +1541,20 @@ namespace TDFInterface
                     Array.Copy(rData, indx, temp, 0, len);
                     s = System.Text.Encoding.Default.GetString(temp);
                     fin.symbolFull = s;
-                    int pos = s.IndexOf("-");
-                    if (pos > 0)
+                    //int pos = s.IndexOf("-");
+                    //fin.symbol = s.Substring(0, pos);
+                    int pos = s.IndexOf(",");
+                    if (pos >= 0)
+                        fin.symbolEx = s.Substring(0, pos);
+                    else
+                        fin.symbolEx = "";
+                    pos = s.IndexOf("-");
+                    if (pos < 0)
+                        fin.symbol = fin.symbolEx;
+                    else
                         fin.symbol = s.Substring(0, pos);
 
                     indx += len;
-
                 }
 
                 ushort numFIDS = ReverseBytes2(BitConverter.ToUInt16(rData, indx));
@@ -1147,129 +1580,142 @@ namespace TDFInterface
             }
         }
 
+        // Process data from dynamic subscriptions
         public void ProcessFinancialUpdateData(itf_Parser_Update_Message TRmess)
         {
-            byte[] rData = new byte[TRmess.Message.Count];
-            rData = TRmess.Message.ToArray();
-            fin_Data fin = new fin_Data();
-            string s = "";
-            UInt32 fidIndx = 0;
-            bool inCataloggedPart = false;
-
-            int indx = 0;
-            ushort numRecords = ReverseBytes2(BitConverter.ToUInt16(rData, indx));
-            indx += 2;
-
-            for (int j = 0; j < numRecords; j++)
+            try
             {
-                if (j > 0)
-                {
-                    fin.resultIndx = 255;
-                }
+                //byte[] rData = new byte[TRmess.Message.Count];
+                byte[] rData = TRmess.Message.ToArray();
+                fin_Data fin = new fin_Data();
+                string s = "";
+                UInt32 fidIndx = 0;
+                bool inCataloggedPart = false;
 
-                ushort dataLen = ReverseBytes2(BitConverter.ToUInt16(rData, indx));
+                int indx = 0;
+                ushort numRecords = ReverseBytes2(BitConverter.ToUInt16(rData, indx));
                 indx += 2;
-                ushort OPenFIDHdr = ReverseBytes2(BitConverter.ToUInt16(rData, indx));
-                indx += 2;
 
-                // Decode Header
-                Open_FID_Hdr h = new Open_FID_Hdr();
-                h = Decode_OpenFID_Header(OPenFIDHdr);
-
-                ushort len;
-
-                // get Symbol
-                if (h.symBol == true)
+                for (int j = 0; j < numRecords; j++)
                 {
-                    len = rData[indx];
-                    indx += 1;
-                    byte[] temp = new byte[len];
-                    Array.Copy(rData, indx, temp, 0, len);
-                    s = System.Text.Encoding.Default.GetString(temp);
-                    fin.symbolFull = s;
-                    int pos = s.IndexOf("-");
-                    fin.symbol = s.Substring(0, pos);
-                    indx += len;
-                }
+                    if (j > 0)
+                    {
+                        fin.resultIndx = 255;
+                    }
 
-                ushort patternNum = 0;
-                ushort numFIDS = ReverseBytes2(BitConverter.ToUInt16(rData, indx));
-                indx += 2;
-                ushort num = 0;
-
-
-                if (h.msgStruct <= 2)
-                {
-                    patternNum = ReverseBytes2(BitConverter.ToUInt16(rData, indx));
+                    ushort dataLen = ReverseBytes2(BitConverter.ToUInt16(rData, indx));
                     indx += 2;
-                    if (patternNum > 130)
-                    {
-                        num = 0;
-                    }
-                    else
-                        num = GetCatalogNumFIDS(patternNum);
+                    ushort OPenFIDHdr = ReverseBytes2(BitConverter.ToUInt16(rData, indx));
+                    indx += 2;
 
-                    numFIDS += num;
-                    numFIDS -= 1;
-                }
+                    // Decode Header
+                    Open_FID_Hdr h = new Open_FID_Hdr();
+                    h = Decode_OpenFID_Header(OPenFIDHdr);
 
-                for (int i = 0; i < numFIDS; i++)
-                {
-                    if (i > num - 1)
-                    {
-                        patternNum = 0;
-                        inCataloggedPart = false;
-                    }
+                    ushort len;
 
-                    if (patternNum > 0)
+                    // get Symbol
+                    if (h.symBol == true)
                     {
-                        fin.fieldId = (UInt32)TDFGlobals.CatalogData[patternNum - 1, i];
-                        inCataloggedPart = true;
-                    }
-                    else
-                    {
-                        fin.fieldId = BitConverter.ToUInt32(rData, indx);
-                        inCataloggedPart = false;
-                        indx += 4;
-                    }
-
-                    // Directives only apply to non-catalogged part
-                    if (h.directives == true && inCataloggedPart == false)
-                    {
-                        fin.operation = rData[indx];
+                        len = rData[indx];
                         indx += 1;
+                        byte[] temp = new byte[len];
+                        Array.Copy(rData, indx, temp, 0, len);
+                        s = System.Text.Encoding.Default.GetString(temp);
+                        fin.symbolFull = s;
+                        int pos = s.IndexOf(",");
+                        fin.symbolEx = s.Substring(0, pos);
+                        pos = s.IndexOf("-");
+                        if (pos < 0)
+                            fin.symbol = fin.symbolEx;
+                        else
+                            fin.symbol = s.Substring(0, pos);
+                        indx += len;
                     }
-                    else
+
+                    ushort patternNum = 0;
+                    ushort numFIDS = ReverseBytes2(BitConverter.ToUInt16(rData, indx));
+                    indx += 2;
+                    ushort num = 0;
+
+
+                    if (h.msgStruct <= 2)
                     {
-                        fin.operation = 1;
-                    }
-
-
-
-                    fidIndx = fin.fieldId & 0x0000ffff;
-                    fin.fieldfFmtId = TDFGlobals.field_Info_Table[fidIndx].fieldfFmtId;
-                    fin.fieldFmtOptional = TDFGlobals.field_Info_Table[fidIndx].fieldFmtOptional;
-                    fin.fieldName = TDFGlobals.field_Info_Table[fidIndx].fieldName;
-                    fin.businessId = (ushort)fidIndx;
-                    fin.fieldDataType = (byte)((fin.fieldId / 0x10000) & 0xff);
-                    fin.numBytes = TDFGlobals.field_Info_Table[fidIndx].numBytes;
-                    fin.show = TDFGlobals.field_Info_Table[fidIndx].show;
-                    fin.dataIndx = TDFGlobals.field_Info_Table[fidIndx].dataIndx;
-
-
-
-                    ConvertBytes(ref fin, ref indx, rData);
-
-                    if (fin.operation > 0)
-                    {
-                        if (TDFGlobals.showAllFields == true || fin.show == true)
+                        patternNum = ReverseBytes2(BitConverter.ToUInt16(rData, indx));
+                        indx += 2;
+                        if (patternNum > 130)
                         {
-                            fin.resultIndx = TDFGlobals.financialResults.Count;
-                            TDFGlobals.financialResults.Add(fin);
+                            num = 0;
+                        }
+                        else
+                            num = GetCatalogNumFIDS(patternNum);
+
+                        numFIDS += num;
+                        numFIDS -= 1;
+                    }
+
+                    for (int i = 0; i < numFIDS; i++)
+                    {
+                        if (i > num - 1)
+                        {
+                            patternNum = 0;
+                            inCataloggedPart = false;
                         }
 
+                        if (patternNum > 0)
+                        {
+                            fin.fieldId = (UInt32)TDFGlobals.CatalogData[patternNum - 1, i];
+                            inCataloggedPart = true;
+                        }
+                        else
+                        {
+                            fin.fieldId = BitConverter.ToUInt32(rData, indx);
+                            inCataloggedPart = false;
+                            indx += 4;
+                        }
+
+                        // Directives only apply to non-catalogged part
+                        if (h.directives == true && inCataloggedPart == false)
+                        {
+                            fin.operation = rData[indx];
+                            indx += 1;
+                        }
+                        else
+                        {
+                            fin.operation = 1;
+                        }
+
+
+
+                        fidIndx = fin.fieldId & 0x0000ffff;
+                        fin.fieldfFmtId = TDFGlobals.field_Info_Table[fidIndx].fieldfFmtId;
+                        fin.fieldFmtOptional = TDFGlobals.field_Info_Table[fidIndx].fieldFmtOptional;
+                        fin.fieldName = TDFGlobals.field_Info_Table[fidIndx].fieldName;
+                        fin.businessId = (ushort)fidIndx;
+                        fin.fieldDataType = (byte)((fin.fieldId / 0x10000) & 0xff);
+                        fin.numBytes = TDFGlobals.field_Info_Table[fidIndx].numBytes;
+                        fin.show = TDFGlobals.field_Info_Table[fidIndx].show;
+                        fin.dataIndx = TDFGlobals.field_Info_Table[fidIndx].dataIndx;
+
+
+
+                        ConvertBytes(ref fin, ref indx, rData);
+
+                        if (fin.operation > 0)
+                        {
+                            if (TDFGlobals.showAllFields == true || fin.show == true)
+                            {
+                                fin.resultIndx = TDFGlobals.financialResults.Count;
+                                TDFGlobals.financialResults.Add(fin);
+                            }
+
+                        }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                log.Error($"ProcessFinancialUpdateData error: {ex}");
             }
         }
 
@@ -1327,6 +1773,8 @@ namespace TDFInterface
                 // float
                 case 5:
                     fin.fData = BitConverter.ToSingle(rData, indx);
+                    if (Math.Abs(fin.fData) < 0.000001)
+                        fin.fData = 0.0F;
                     indx += 4;
                     break;
                 // double
@@ -1366,9 +1814,6 @@ namespace TDFInterface
                     break;
             }
         }
-
-
-
 
         public static Open_FID_Hdr Decode_OpenFID_Header(ushort OPenFIDHdr)
         {
@@ -1434,23 +1879,376 @@ namespace TDFInterface
             }
             return h;
         }
-        public static ushort GetCatalogNumFIDS(ushort patternNo)
-        {
-            bool done = false;
-            ushort i = 0;
 
-            while (done == false)
+        #endregion
+
+        #region Symbol functions
+        public static void InitializeSymbolFields()
+        {
+            // monitored fields
+            TDFGlobals.starredFields.Add("isiErrCode"); // 0
+            TDFGlobals.starredFields.Add("errMsg"); // 1
+            TDFGlobals.starredFields.Add("sectyType"); // 2
+            TDFGlobals.starredFields.Add("trdPrc"); // 3
+            TDFGlobals.starredFields.Add("netChg"); // 4
+            TDFGlobals.starredFields.Add("pcntChg"); //5
+            TDFGlobals.starredFields.Add("cumVol"); // 6
+            TDFGlobals.starredFields.Add("hi"); // 7
+            TDFGlobals.starredFields.Add("lo"); // 8
+            TDFGlobals.starredFields.Add("opn"); // 9
+            TDFGlobals.starredFields.Add("ycls"); //10
+            TDFGlobals.starredFields.Add("annHi"); // 11
+            TDFGlobals.starredFields.Add("annLo");// 12
+            TDFGlobals.starredFields.Add("lastActivity"); // 13
+            TDFGlobals.starredFields.Add("lastActivityNetChg"); // 14
+            TDFGlobals.starredFields.Add("lastActivityPcntChg"); // 15
+            TDFGlobals.starredFields.Add("lastActivityVol"); // 16
+            TDFGlobals.starredFields.Add("ask"); // 17
+            TDFGlobals.starredFields.Add("askYld"); // 18
+            TDFGlobals.starredFields.Add("bid"); // 19
+            TDFGlobals.starredFields.Add("bidYld"); // 20
+            TDFGlobals.starredFields.Add("bidNetChg"); // 21
+            TDFGlobals.starredFields.Add("bidYldNetChg"); // 22
+            TDFGlobals.starredFields.Add("yld"); // 23
+            TDFGlobals.starredFields.Add("yldNetChg"); // 24
+            TDFGlobals.starredFields.Add("setPrc"); // 25
+            TDFGlobals.starredFields.Add("monthClsPrc"); //26
+            TDFGlobals.starredFields.Add("yrClsPrc"); // 27
+            TDFGlobals.starredFields.Add("divAnn"); // 28
+            TDFGlobals.starredFields.Add("intRate"); // 29
+            TDFGlobals.starredFields.Add("peRatio"); // 30
+            TDFGlobals.starredFields.Add("eps"); // 31
+            TDFGlobals.starredFields.Add("mktCap"); //32
+            TDFGlobals.starredFields.Add("companyShrsOutstanding"); // 33
+            TDFGlobals.starredFields.Add("symbol"); // 34
+            TDFGlobals.starredFields.Add("prcFmtCode"); // 35
+            TDFGlobals.starredFields.Add("issuerName"); // 36
+            TDFGlobals.starredFields.Add("ysetPrc"); // 37
+
+
+            // Initialize catalog array
+            for (int i = 0; i < 150; i++)
             {
-                if (TDFGlobals.CatalogData[patternNo - 1, i] == 0)
+                for (int j = 0; j < 60; j++)
                 {
-                    done = true;
+                    TDFGlobals.CatalogData[i, j] = 0;
                 }
-                i++;
             }
-            i--;
-            return i;
+
+            
+            MarketModel.ServerReset sr = MarketFunctions.GetServerResetSched(TDFGlobals.ServerID);
+            TDFConnections.nextServerReset = TDFConnections.GetNextServerResetTime(sr);
+            TDFConnections.nextDailyReset = TDFConnections.GetNextDailyResetTime(sr);
+
+            TDFGlobals.marketOpenStatus = MarketFunctions.IsMarketOpen();
+
+
         }
 
+
+        public static int GetSymbolIndx(string sym)
+        {
+            try
+            {
+                string s;
+                int indx = -1;
+                for (int i = 0; i < TDFGlobals.brokerSymbols.Count; i++)
+                {
+                    if (TDFGlobals.brokerSymbols[i].symbol == sym)
+                        indx = i;
+                }
+
+
+                if (indx < 0)
+                    s = $"sym: {sym}  Count: {TDFGlobals.brokerSymbols.Count}";
+
+                return indx;
+            }
+            catch (Exception ex)
+            {
+                log.Error($"GetSymbolIndx error - {ex}");
+                return -1;
+
+            }
+
+        }
+        private int GetSymbolIndxBySeq(string sym, uint seqId)
+        {
+            int indx = -1;
+            for (int i = 0; i < TDFGlobals.brokerSymbols.Count; i++)
+            {
+                if (TDFGlobals.brokerSymbols[i].symbol == sym && TDFGlobals.brokerSymbols[i].seqId == seqId)
+                    indx = i;
+            }
+            if (indx < 0)
+            {
+                indx = 0;
+            }
+            return indx;
+        }
+
+        public static void SetSymbolData(List<fin_Data> f, int i, int symIndx)
+        {
+            try
+            {
+                if (symIndx >= 0)
+                {
+                    TDFGlobals.brokerSymbols[symIndx].symbolFull = f[i].symbolFull;
+                    if (f[i].show)
+                    {
+                        switch (f[i].dataIndx)
+                        {
+                            case 0:
+                                TDFGlobals.brokerSymbols[symIndx].isiErrCode = f[i].iData;
+                                break;
+                            case 1:
+                                TDFGlobals.brokerSymbols[symIndx].errMsg = f[i].sData;
+                                break;
+                            case 2:
+                                TDFGlobals.brokerSymbols[symIndx].sectyType = f[i].bData;
+                                break;
+                            case 3:
+                                TDFGlobals.brokerSymbols[symIndx].trdPrc = f[i].fData;
+
+                                if (TDFGlobals.brokerSymbols[symIndx].sectyType == 0 || TDFGlobals.brokerSymbols[symIndx].sectyType == 4 || TDFGlobals.brokerSymbols[symIndx].sectyType == 5)
+                                    TDFGlobals.brokerSymbols[symIndx].Price = f[i].fData;
+                                break;
+                            case 4:
+                                TDFGlobals.brokerSymbols[symIndx].netChg = f[i].fData;
+
+                                if (TDFGlobals.brokerSymbols[symIndx].sectyType == 0 || TDFGlobals.brokerSymbols[symIndx].sectyType == 4 ||
+                                        TDFGlobals.brokerSymbols[symIndx].sectyType == 5 || TDFGlobals.brokerSymbols[symIndx].sectyType == 15)
+                                {
+                                    TDFGlobals.brokerSymbols[symIndx].Change = f[i].fData;
+                                    TDFGlobals.brokerSymbols[symIndx].ABSChange = Math.Abs(TDFGlobals.brokerSymbols[symIndx].Change);
+                                }
+                                break;
+                            case 5:
+                                TDFGlobals.brokerSymbols[symIndx].pcntChg = f[i].fData;
+                                if (TDFGlobals.brokerSymbols[symIndx].sectyType == 0 || TDFGlobals.brokerSymbols[symIndx].sectyType == 4 || TDFGlobals.brokerSymbols[symIndx].sectyType == 5)
+                                    TDFGlobals.brokerSymbols[symIndx].PercentChange = f[i].fData;
+                                break;
+                            case 6:
+                                TDFGlobals.brokerSymbols[symIndx].cumVol = f[i].iData;
+                                break;
+                            case 7:
+                                TDFGlobals.brokerSymbols[symIndx].hi = f[i].fData;
+                                break;
+                            case 8:
+                                TDFGlobals.brokerSymbols[symIndx].lo = f[i].fData;
+                                break;
+                            case 9:
+                                TDFGlobals.brokerSymbols[symIndx].opn = f[i].fData;
+                                break;
+                            case 10:
+                                TDFGlobals.brokerSymbols[symIndx].ycls = f[i].fData;
+                                break;
+                            case 11:
+                                TDFGlobals.brokerSymbols[symIndx].annHi = f[i].fData;
+                                break;
+                            case 12:
+                                TDFGlobals.brokerSymbols[symIndx].annLo = f[i].fData;
+                                break;
+                            case 13:
+                                TDFGlobals.brokerSymbols[symIndx].lastActivity = f[i].fData;
+                                break;
+                            case 14:
+                                TDFGlobals.brokerSymbols[symIndx].lastActivityNetChg = f[i].fData;
+                                break;
+                            case 15:
+                                TDFGlobals.brokerSymbols[symIndx].lastActivityPcntChg = f[i].fData;
+                                break;
+                            case 16:
+                                TDFGlobals.brokerSymbols[symIndx].lastActivityVol = f[i].iData;
+                                break;
+                            case 17:
+                                TDFGlobals.brokerSymbols[symIndx].ask = f[i].fData;
+                                break;
+                            case 18:
+                                TDFGlobals.brokerSymbols[symIndx].askYld = f[i].fData;
+                                break;
+                            case 19:
+                                TDFGlobals.brokerSymbols[symIndx].bid = f[i].fData;
+                                if (TDFGlobals.brokerSymbols[symIndx].sectyType == 15)
+                                    TDFGlobals.brokerSymbols[symIndx].Price = f[i].fData;
+                                break;
+                            case 20:
+                                TDFGlobals.brokerSymbols[symIndx].bidYld = f[i].fData;
+                                if (TDFGlobals.brokerSymbols[symIndx].sectyType == 7)
+                                    TDFGlobals.brokerSymbols[symIndx].Price = f[i].fData;
+                                break;
+                            case 21:
+                                TDFGlobals.brokerSymbols[symIndx].bidNetChg = f[i].fData;
+                                break;
+                            case 22:
+                                TDFGlobals.brokerSymbols[symIndx].bidYldNetChg = f[i].fData;
+                                break;
+                            case 23:
+                                TDFGlobals.brokerSymbols[symIndx].yld = f[i].fData;
+                                break;
+                            case 24:
+                                TDFGlobals.brokerSymbols[symIndx].yldNetChg = f[i].fData;
+                                if (TDFGlobals.brokerSymbols[symIndx].sectyType == 7)
+                                {
+                                    TDFGlobals.brokerSymbols[symIndx].Change = f[i].fData;
+                                    TDFGlobals.brokerSymbols[symIndx].ABSChange = Math.Abs(TDFGlobals.brokerSymbols[symIndx].Change);
+                                    TDFGlobals.brokerSymbols[symIndx].BasisPoints = f[i].fData * 100.0F;
+                                }
+                                break;
+                            case 25:
+                                TDFGlobals.brokerSymbols[symIndx].setPrc = f[i].fData;
+                                break;
+                            case 26:
+                                TDFGlobals.brokerSymbols[symIndx].monthClsPrc = f[i].fData;
+                                break;
+                            case 27:
+                                TDFGlobals.brokerSymbols[symIndx].yrClsPrc = f[i].fData;
+                                break;
+                            case 28:
+                                TDFGlobals.brokerSymbols[symIndx].divAnn = f[i].fData;
+                                break;
+                            case 29:
+                                TDFGlobals.brokerSymbols[symIndx].intRate = f[i].fData;
+                                break;
+                            case 30:
+                                TDFGlobals.brokerSymbols[symIndx].peRatio = f[i].fData;
+                                break;
+                            case 31:
+                                TDFGlobals.brokerSymbols[symIndx].eps = f[i].fData;
+                                break;
+                            case 32:
+                                TDFGlobals.brokerSymbols[symIndx].mktCap = f[i].fData;
+                                break;
+                            case 33:
+                                TDFGlobals.brokerSymbols[symIndx].companyShrsOutstanding = f[i].iData;
+                                break;
+                            case 34:
+                                TDFGlobals.brokerSymbols[symIndx].symbol = f[i].sData;
+                                break;
+                            case 35:
+                                TDFGlobals.brokerSymbols[symIndx].prcFmtCode = (ushort)f[i].iData;
+                                break;
+                            case 36:
+                                TDFGlobals.brokerSymbols[symIndx].issuerName = f[i].sData;
+                                break;
+                            case 37:
+                                TDFGlobals.brokerSymbols[symIndx].ysetPrc = f[i].fData;
+                                break;
+
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Error($"SetSymbolData error - {ex}");
+            }
+
+        }
+
+        public void UpdateSymbols()
+        {
+            try
+            {
+                string sym = "";
+                string oldSym = "";
+                int symbolIndex = -1;
+                int n = TDFGlobals.financialResults.Count;
+                fin_Data fd = new fin_Data();
+                List<int> updateIndx = new List<int>();
+
+                if (n > 0)
+                {
+                    for (int i = 0; i < n; i++)
+                    {
+                        sym = TDFGlobals.financialResults[i].symbol;
+                        if (sym != oldSym && sym != null)
+                        {
+                            // new symbol
+                            // Update previous symbol except first one or last symbol was an error
+
+                            /*
+                            if (i > 0)
+                            {
+                                // update previous symbol
+                                if (symbolIndex >= 0 && symbolError == false)
+                                    UpdateSymbol(symbolIndex);
+                                else
+                                {
+                                    //fin_Data fd = new fin_Data();
+                                    //fd = TDFGlobals.financialResults[i];
+                                    //fixSymbols(fd);
+
+                                    log.Error($"Previous symbol not updated.  Symbol : {oldSym}");
+
+                                }
+                            }
+                            */
+
+                            symbolIndex = TDFProcessingFunctions.GetSymbolIndx(TDFGlobals.financialResults[i].symbol);
+                            TDFGlobals.seqIdsrecd[TDFGlobals.brokerSymbols[symbolIndex].seqId] = true;
+
+                            if (symbolIndex >= 0)
+                            {
+                                TDFGlobals.brokerSymbols[symbolIndex].updated = DateTime.Now;
+                            }
+                            else
+                            {
+                                //fin_Data fd = new fin_Data();
+                                fd = TDFGlobals.financialResults[i];
+                                //fixSymbols(fd);
+                                //Log.Error($"symbolIndex < 0  Symbol : {sym}  fieldName : {fd.fieldName}");
+
+                            }
+                            oldSym = sym;
+                        }
+
+
+                        if (symbolIndex >= 0)
+                        {
+                            TDFProcessingFunctions.SetSymbolData(TDFGlobals.financialResults, i, symbolIndex);
+
+                        }
+                        else
+                        {
+                            //fin_Data fd = new fin_Data();
+                            fd = TDFGlobals.financialResults[i];
+                            //fixSymbols(fd);
+                            //Log.Error($"symbolIndex < 0  Symbol : {sym}  fieldName : {fd.fieldName}");
+
+                        }
+                        
+                    }
+                }
+
+                TDFGlobals.financialResults.RemoveRange(0, n);
+                
+            }
+            catch (Exception ex)
+            {
+                log.Error($"UpdateSymbols: {ex}");
+            }
+
+        }
+
+        public void unSubscribeSymbol(string unSymbol)
+        {
+            if (unSymbol != null)
+            {
+                string queryStr = "DELETE FROM SUBSCRIPTION_TABLE WHERE channelName = DYNAMIC_QUOTES AND usrSymbol = \"" + unSymbol + "\"";
+                uint seqID = 97;
+
+                ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
+                byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, queryStr, TDFconstants.DATA_REQUEST, seqID);
+                //TRSendCommand(outputbuf);
+                sendBuf(outputbuf);
+
+            }
+        }
+
+        #endregion
+
+        #region misc funtions
         // Reverses byte order (32 bit - 4 bytes)
         public static UInt32 ReverseBytes4(UInt32 value)
         {
@@ -1485,57 +2283,29 @@ namespace TDFInterface
             return UnixEpoch.AddSeconds(seconds);
         }
 
-        public void unSubscribeSymbol(string unSymbol)
+        #endregion
+
+        public static void ProcessKeepAliveRequest(itf_Parser_Return_Message TRmess)
         {
-            if (unSymbol != null)
+            try
             {
-                string queryStr = "DELETE FROM SUBSCRIPTION_TABLE WHERE channelName = DYNAMIC_QUOTES AND usrSymbol = \"" + unSymbol + "\"";
-                uint seqID = 97;
+                // Build KEEP ALIVE Message
+                string queryStr = System.Text.Encoding.Default.GetString(TRmess.Message.ToArray());
 
                 ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
-                byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, queryStr, TDFconstants.DATA_REQUEST, seqID);
+                byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, queryStr, TDFconstants.KEEP_ALIVE_RESPONSE, 0);
                 //TRSendCommand(outputbuf);
                 sendBuf(outputbuf);
-
+                //SendKeepAliveRequest(queryStr);
+            }
+            catch (Exception ex)
+            {
+                log.Error($"Process KEEP ALIVE REQUEST error: {ex}");
             }
         }
-
-        public void GetCataloger()
+        public void SendKeepAliveRequest(string queryStr)
         {
-            // Build Logon Message
-            string queryStr = "SELECT * FROM CATALOGER_TABLE";
-
-            ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
-            byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, queryStr, TDFconstants.DATA_REQUEST, 99);
-            //TRSendCommand(outputbuf);
-            sendBuf(outputbuf);
-        }
-        public void GetFieldInfoTable()
-        {
-            // Build Logon Message
-            string queryStr = "SELECT * FROM FIELD_INFO_TABLE";
-
-            ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
-            byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, queryStr, TDFconstants.DATA_REQUEST, 98);
-            //TRSendCommand(outputbuf);
-            sendBuf(outputbuf);
-        }
-
-        public void ProcessKeepAliveRequest(itf_Parser_Return_Message TRmess)
-        {
-            // Build Logon Message
-            string queryStr = System.Text.Encoding.Default.GetString(TRmess.Message.ToArray());
-
-            ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
-            byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, queryStr, TDFconstants.KEEP_ALIVE_RESPONSE, 0);
-            //TRSendCommand(outputbuf);
-            sendBuf(outputbuf);
-        }
-        public void SendKeepAliveRequest()
-        {
-            // Build Logon Message
-            string queryStr = "KEEPALIVE";
-
+            
             ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
             byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, queryStr, TDFconstants.KEEP_ALIVE_REQUEST, 0);
             //TRSendCommand(outputbuf);
@@ -1543,9 +2313,25 @@ namespace TDFInterface
 
         }
 
+        public void UnsubscribeAll()
+        {
+            ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
+            string sym;
+            string queryStr;
+            log.Debug("Unsubscribing...");
+            string quot = "\"";
 
+            foreach (symbolData sd in TDFGlobals.brokerSymbols)
+            {
+                sym = sd.symbolFull;
+                queryStr = $"DELETE FROM SUBSCRIPTION_TABLE WHERE channelName = DYNAMIC_QUOTES AND usrSymbol = {quot}{sym}{quot}";
+                byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, queryStr, TDFconstants.DATA_REQUEST, 1);
+                TDFConnections.TRSendCommand(outputbuf);
+                Thread.Sleep(2);
 
-        #endregion
+            }
+        }
+
 
 
     }

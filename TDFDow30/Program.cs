@@ -51,10 +51,9 @@ namespace TDFDow30
             {
                 // Top-level error dialog if exception bubbles up
                 //MessageBox.Show("General error occurred with application. Please re-start to ensure proper operation.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-
+                
                 // Log the error 
-                //log.Debug("General exception occurred at main program level", ex);
-                //log.Error("General exception occurred at main program level: " + ex.Message);
+                log.Error($"General exception occurred at main program level: {ex}");
             }
 
 

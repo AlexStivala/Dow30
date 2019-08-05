@@ -24,7 +24,14 @@ namespace TDFInterface
         [Description("Charts")]
         Charts = 4,
 
+        [Description("Change Since")]
+        ChangeSince = 5,
+
+        [Description("Pulse")]
+        Pulse = 6,
+
     }
+
     public enum XMLTypes
     {
         [Description("Unknown")]
@@ -39,7 +46,30 @@ namespace TDFInterface
         [Description("bpPages")]
         bpPages = 3,
 
+        [Description("marketStatistics")]
+        marketStatistics = 4,
+
     }
+
+    public enum RequestTypes
+    {
+        [Description("Quotes")]
+        Quotes = 0,
+
+        [Description("Charts")]
+        Charts = 1,
+
+        [Description("Change Since")]
+        ChangeSince = 2,
+
+        [Description("Pulse")]
+        Pulse = 3,
+
+        [Description("Winners and losers")]
+        Winners = 4,
+
+    }
+
 
     public class TDFconstants
     {
@@ -75,6 +105,20 @@ namespace TDFInterface
     public class TDFGlobals
     {
         public static List<symbolData> symbols = new List<symbolData>();
+        public static List<symbolData> brokerSymbols = new List<symbolData>();
+        public static List<MarketModel.DataRequests> dataRequests = new List<MarketModel.DataRequests>();
+        public static List<byte> TRdata = new List<byte>();
+        public static int dataLeft;
+        public static bool loggedIn = false;
+        public static string logResp = "";
+        public static List<string> catStr = new List<string>();
+        public static bool pageDataFlag = false;
+        public static AsyncClientSocket.ClientSocket TRClientSocket;
+        public static bool TRConnected = false;
+        public static int ServerID = 0;
+        public static bool dynamic = false;
+
+        
         public static List<symbolData> LiveUpdates = new List<symbolData>();
         public static field_Info[] field_Info_Table = new field_Info[0x10000];
         public static List<string> starredFields = new List<string>();
@@ -84,6 +128,20 @@ namespace TDFInterface
 
         public static bool showAllFields { get; set; }
         public static List<string> Dow30symbols = new List<string>();
+
+        public List<string> holidays = new List<string>();
+
+        public static bool liveUpdateFlag = false;
+        public static bool[] seqIdsUsed = new bool[65000];
+        public static bool[] seqIdsrecd = new bool[65000];
+        public static uint seqStrt;
+        public static int requestId = 0;
+        public DateTime serverReset;
+        public static TimeSpan marketOpen = new TimeSpan(9, 30, 00); //9:30 am
+        public static TimeSpan marketClose = new TimeSpan(16, 00, 0); //4:00 pm 
+        public static bool marketOpenStatus;
+
+
 
 
     }

@@ -159,5 +159,14 @@ namespace TDFDow30.Properties {
                 return ((string)(this["spUpdateChart"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public int TDFServer_ID {
+            get {
+                return ((int)(this["TDFServer_ID"]));
+            }
+        }
     }
 }

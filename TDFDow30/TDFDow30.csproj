@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{0B9C5929-F280-4473-BBBD-6C6E78EFE1DE}</ProjectGuid>
+    <ProjectGuid>{927DAE7E-2D39-440B-9378-71B007E048D8}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <RootNamespace>TDFDow30</RootNamespace>
     <AssemblyName>TDFDow30</AssemblyName>
@@ -93,7 +93,7 @@
       <Name>ClientSocket</Name>
     </ProjectReference>
     <ProjectReference Include="..\TDFInterface\TDFInterface.csproj">
-      <Project>{7fae5f37-3200-42f8-8482-883c15ce45ec}</Project>
+      <Project>{c87a29cb-6427-4553-b7f1-4a0f7954f2f8}</Project>
       <Name>TDFInterface</Name>
     </ProjectReference>
   </ItemGroup>

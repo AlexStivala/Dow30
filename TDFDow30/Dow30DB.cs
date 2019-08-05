@@ -17,6 +17,27 @@ namespace Dow30Database
 {
     public class Dow30DB
     {
+        #region Logger instantiation - uses reflection to get module name
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        #endregion
+
+        #region Logging & status setup
+        // This method used to implement IAppender interface from log4net; to support custom appends to status strip
+        public void DoAppend(log4net.Core.LoggingEvent loggingEvent)
+        {
+            // Set text on status bar only if logging level is DEBUG or ERROR
+            if ((loggingEvent.Level.Name == "ERROR") | (loggingEvent.Level.Name == "DEBUG"))
+            {
+                //toolStripStatusLabel.BackColor = System.Drawing.Color.Red;
+                //toolStripStatusLabel.Text = String.Format("Error Logging Message: {0}: {1}", loggingEvent.Level.Name, loggingEvent.MessageObject.ToString());
+            }
+            else
+            {
+                //toolStripStatusLabel.BackColor = System.Drawing.Color.SpringGreen;
+                //toolStripStatusLabel.Text = String.Format("Status Logging Message: {0}: {1}", loggingEvent.Level.Name, loggingEvent.MessageObject.ToString());
+            }
+        }
+        #endregion
 
         public class Dow30symbolData
         {
@@ -67,7 +88,7 @@ namespace Dow30Database
             catch (Exception ex)
             {
                 // Log error
-                //log.Error("GetDBData Exception occurred: " + ex.Message);
+                log.Error($"GetDBData Exception occurred: {ex}");
                 //log.Debug("GetDBData Exception occurred", ex);
             }
 
@@ -102,7 +123,7 @@ namespace Dow30Database
             catch (Exception ex)
             {
                 // Log error
-                //log.Error("GetDBData Exception occurred: " + ex.Message);
+                log.Error($"GetDBData Exception occurred: {ex}");
                 //log.Debug("GetDBData Exception occurred", ex);
                 numRowsAffected = -1;
 
@@ -145,8 +166,7 @@ namespace Dow30Database
             {
                 MessageBox.Show("Error");
                 // Log error
-                //log.Error("GetCandidateDataCollection Exception occurred: " + ex.Message);
-                //log.Debug("GetCandidateDataCollection Exception occurred", ex);
+                log.Error($"GetSymbolDataCollection Exception occurred: {ex}");
             }
             // Return 
             return Dow30;
@@ -180,8 +200,8 @@ namespace Dow30Database
             {
                 MessageBox.Show("Error");
                 // Log error
-                //log.Error("GetCandidateDataCollection Exception occurred: " + ex.Message);
-                //log.Debug("GetCandidateDataCollection Exception occurred", ex);
+                log.Error($"GetHolidays Exception occurred: {ex}");
+                
             }
             // Return 
             return holidays;

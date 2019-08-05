@@ -69,6 +69,11 @@
             this.ResetTimer = new System.Windows.Forms.Timer(this.components);
             this.button8 = new System.Windows.Forms.Button();
             this.button9 = new System.Windows.Forms.Button();
+            this.ServerResetLabel = new System.Windows.Forms.Label();
+            this.DailyResetLabel = new System.Windows.Forms.Label();
+            this.DataResetLabel = new System.Windows.Forms.Label();
+            this.ServerTextBox = new System.Windows.Forms.TextBox();
+            this.label15 = new System.Windows.Forms.Label();
             this.groupBox5.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -83,6 +88,9 @@
             // 
             this.groupBox5.Controls.Add(this.lblHostName);
             this.groupBox5.Controls.Add(this.lblIpAddress);
+            this.groupBox5.Controls.Add(this.label7);
+            this.groupBox5.Controls.Add(this.label6);
+            this.groupBox5.Controls.Add(this.label1);
             this.groupBox5.Location = new System.Drawing.Point(416, 18);
             this.groupBox5.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.groupBox5.Name = "groupBox5";
@@ -116,16 +124,11 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.ServerTextBox);
+            this.groupBox1.Controls.Add(this.label15);
             this.groupBox1.Controls.Add(this.groupBox2);
             this.groupBox1.Controls.Add(this.lblLogResp);
             this.groupBox1.Controls.Add(this.ConnectButton);
-            this.groupBox1.Controls.Add(this.label7);
-            this.groupBox1.Controls.Add(this.label1);
-            this.groupBox1.Controls.Add(this.PWlabel);
-            this.groupBox1.Controls.Add(this.label6);
-            this.groupBox1.Controls.Add(this.PWTextBox);
-            this.groupBox1.Controls.Add(this.Userlabel);
-            this.groupBox1.Controls.Add(this.UserTextBox);
             this.groupBox1.Controls.Add(this.label4);
             this.groupBox1.Controls.Add(this.PortTextBox);
             this.groupBox1.Controls.Add(this.IPlabel);
@@ -135,7 +138,7 @@
             this.groupBox1.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            this.groupBox1.Size = new System.Drawing.Size(1418, 131);
+            this.groupBox1.Size = new System.Drawing.Size(767, 136);
             this.groupBox1.TabIndex = 171;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Login Info";
@@ -144,7 +147,7 @@
             // 
             this.groupBox2.Controls.Add(this.pictureBox2);
             this.groupBox2.Controls.Add(this.pictureBox1);
-            this.groupBox2.Location = new System.Drawing.Point(874, 26);
+            this.groupBox2.Location = new System.Drawing.Point(587, 23);
             this.groupBox2.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
@@ -178,7 +181,7 @@
             // 
             this.lblLogResp.AutoSize = true;
             this.lblLogResp.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblLogResp.Location = new System.Drawing.Point(10, 95);
+            this.lblLogResp.Location = new System.Drawing.Point(10, 100);
             this.lblLogResp.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblLogResp.Name = "lblLogResp";
             this.lblLogResp.Size = new System.Drawing.Size(181, 25);
@@ -187,7 +190,7 @@
             // 
             // ConnectButton
             // 
-            this.ConnectButton.Location = new System.Drawing.Point(1032, 34);
+            this.ConnectButton.Location = new System.Drawing.Point(464, 77);
             this.ConnectButton.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.ConnectButton.Name = "ConnectButton";
             this.ConnectButton.Size = new System.Drawing.Size(158, 60);
@@ -201,7 +204,7 @@
             // 
             this.label7.AutoSize = true;
             this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label7.Location = new System.Drawing.Point(1198, 43);
+            this.label7.Location = new System.Drawing.Point(368, 0);
             this.label7.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(161, 25);
@@ -213,7 +216,7 @@
             // 
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(1198, 94);
+            this.label1.Location = new System.Drawing.Point(368, 45);
             this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(64, 25);
@@ -225,18 +228,19 @@
             // 
             this.PWlabel.AutoSize = true;
             this.PWlabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.PWlabel.Location = new System.Drawing.Point(656, 26);
+            this.PWlabel.Location = new System.Drawing.Point(1055, 1553);
             this.PWlabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.PWlabel.Name = "PWlabel";
             this.PWlabel.Size = new System.Drawing.Size(106, 25);
             this.PWlabel.TabIndex = 158;
             this.PWlabel.Text = "Password";
+            this.PWlabel.Visible = false;
             // 
             // label6
             // 
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(1198, 68);
+            this.label6.Location = new System.Drawing.Point(368, 20);
             this.label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(133, 25);
@@ -247,39 +251,42 @@
             // PWTextBox
             // 
             this.PWTextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.PWTextBox.Location = new System.Drawing.Point(660, 54);
+            this.PWTextBox.Location = new System.Drawing.Point(1059, 1581);
             this.PWTextBox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.PWTextBox.Name = "PWTextBox";
             this.PWTextBox.ReadOnly = true;
             this.PWTextBox.Size = new System.Drawing.Size(187, 30);
             this.PWTextBox.TabIndex = 157;
+            this.PWTextBox.Visible = false;
             // 
             // Userlabel
             // 
             this.Userlabel.AutoSize = true;
             this.Userlabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.Userlabel.Location = new System.Drawing.Point(442, 26);
+            this.Userlabel.Location = new System.Drawing.Point(841, 1553);
             this.Userlabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.Userlabel.Name = "Userlabel";
             this.Userlabel.Size = new System.Drawing.Size(119, 25);
             this.Userlabel.TabIndex = 156;
             this.Userlabel.Text = "User Name";
+            this.Userlabel.Visible = false;
             // 
             // UserTextBox
             // 
             this.UserTextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.UserTextBox.Location = new System.Drawing.Point(447, 54);
+            this.UserTextBox.Location = new System.Drawing.Point(846, 1581);
             this.UserTextBox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.UserTextBox.Name = "UserTextBox";
             this.UserTextBox.ReadOnly = true;
             this.UserTextBox.Size = new System.Drawing.Size(187, 30);
             this.UserTextBox.TabIndex = 155;
+            this.UserTextBox.Visible = false;
             // 
             // label4
             // 
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label4.Location = new System.Drawing.Point(220, 26);
+            this.label4.Location = new System.Drawing.Point(353, 30);
             this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(51, 25);
@@ -289,7 +296,7 @@
             // PortTextBox
             // 
             this.PortTextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.PortTextBox.Location = new System.Drawing.Point(225, 54);
+            this.PortTextBox.Location = new System.Drawing.Point(358, 58);
             this.PortTextBox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.PortTextBox.Name = "PortTextBox";
             this.PortTextBox.ReadOnly = true;
@@ -300,7 +307,7 @@
             // 
             this.IPlabel.AutoSize = true;
             this.IPlabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.IPlabel.Location = new System.Drawing.Point(15, 26);
+            this.IPlabel.Location = new System.Drawing.Point(150, 30);
             this.IPlabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.IPlabel.Name = "IPlabel";
             this.IPlabel.Size = new System.Drawing.Size(118, 25);
@@ -310,7 +317,7 @@
             // IPTextBox
             // 
             this.IPTextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.IPTextBox.Location = new System.Drawing.Point(12, 54);
+            this.IPTextBox.Location = new System.Drawing.Point(147, 58);
             this.IPTextBox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.IPTextBox.Name = "IPTextBox";
             this.IPTextBox.ReadOnly = true;
@@ -376,7 +383,7 @@
             // symbolDataGrid
             // 
             this.symbolDataGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.symbolDataGrid.Location = new System.Drawing.Point(89, 227);
+            this.symbolDataGrid.Location = new System.Drawing.Point(89, 232);
             this.symbolDataGrid.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.symbolDataGrid.MultiSelect = false;
             this.symbolDataGrid.Name = "symbolDataGrid";
@@ -396,7 +403,6 @@
             this.button1.Text = "Get DB Table";
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Visible = false;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // button2
             // 
@@ -408,7 +414,6 @@
             this.button2.Text = "Set Symbol List";
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Visible = false;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
             // button3
             // 
@@ -420,7 +425,6 @@
             this.button3.Text = "Get Dow 30 Data";
             this.button3.UseVisualStyleBackColor = true;
             this.button3.Visible = false;
-            this.button3.Click += new System.EventHandler(this.button3_Click);
             // 
             // listBox1
             // 
@@ -450,7 +454,6 @@
             this.button4.Text = "Test Email";
             this.button4.UseVisualStyleBackColor = true;
             this.button4.Visible = false;
-            this.button4.Click += new System.EventHandler(this.button4_Click);
             // 
             // TODTimer
             // 
@@ -467,7 +470,6 @@
             this.button5.Text = "Disconnect";
             this.button5.UseVisualStyleBackColor = true;
             this.button5.Visible = false;
-            this.button5.Click += new System.EventHandler(this.button5_Click);
             // 
             // button6
             // 
@@ -491,7 +493,6 @@
             this.button7.Text = "Update ZipperDataFile";
             this.button7.UseVisualStyleBackColor = true;
             this.button7.Visible = false;
-            this.button7.Click += new System.EventHandler(this.button7_Click);
             // 
             // WatchdogTimer
             // 
@@ -514,7 +515,6 @@
             this.button8.Text = "Yesterday\" Close";
             this.button8.UseVisualStyleBackColor = true;
             this.button8.Visible = false;
-            this.button8.Click += new System.EventHandler(this.button8_Click);
             // 
             // button9
             // 
@@ -526,22 +526,84 @@
             this.button9.Text = "Get DB Table";
             this.button9.UseVisualStyleBackColor = true;
             this.button9.Visible = false;
-            this.button9.Click += new System.EventHandler(this.button1_Click);
+            // 
+            // ServerResetLabel
+            // 
+            this.ServerResetLabel.AutoSize = true;
+            this.ServerResetLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ServerResetLabel.Location = new System.Drawing.Point(863, 186);
+            this.ServerResetLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.ServerResetLabel.Name = "ServerResetLabel";
+            this.ServerResetLabel.Size = new System.Drawing.Size(128, 25);
+            this.ServerResetLabel.TabIndex = 199;
+            this.ServerResetLabel.Text = "Data reset at:";
+            // 
+            // DailyResetLabel
+            // 
+            this.DailyResetLabel.AutoSize = true;
+            this.DailyResetLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.DailyResetLabel.Location = new System.Drawing.Point(863, 148);
+            this.DailyResetLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.DailyResetLabel.Name = "DailyResetLabel";
+            this.DailyResetLabel.Size = new System.Drawing.Size(128, 25);
+            this.DailyResetLabel.TabIndex = 198;
+            this.DailyResetLabel.Text = "Data reset at:";
+            // 
+            // DataResetLabel
+            // 
+            this.DataResetLabel.AutoSize = true;
+            this.DataResetLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.DataResetLabel.Location = new System.Drawing.Point(863, 111);
+            this.DataResetLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.DataResetLabel.Name = "DataResetLabel";
+            this.DataResetLabel.Size = new System.Drawing.Size(128, 25);
+            this.DataResetLabel.TabIndex = 197;
+            this.DataResetLabel.Text = "Data reset at:";
+            // 
+            // ServerTextBox
+            // 
+            this.ServerTextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ServerTextBox.Location = new System.Drawing.Point(15, 57);
+            this.ServerTextBox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.ServerTextBox.Name = "ServerTextBox";
+            this.ServerTextBox.ReadOnly = true;
+            this.ServerTextBox.Size = new System.Drawing.Size(88, 30);
+            this.ServerTextBox.TabIndex = 181;
+            this.ServerTextBox.TextChanged += new System.EventHandler(this.ServerTextBox_TextChanged);
+            // 
+            // label15
+            // 
+            this.label15.AutoSize = true;
+            this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label15.Location = new System.Drawing.Point(10, 30);
+            this.label15.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(103, 25);
+            this.label15.TabIndex = 180;
+            this.label15.Text = "Server ID";
+            this.label15.Click += new System.EventHandler(this.label15_Click);
             // 
             // frmMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSize = true;
-            this.ClientSize = new System.Drawing.Size(1476, 1557);
+            this.ClientSize = new System.Drawing.Size(1476, 1640);
+            this.Controls.Add(this.ServerResetLabel);
+            this.Controls.Add(this.DailyResetLabel);
+            this.Controls.Add(this.DataResetLabel);
             this.Controls.Add(this.symbolDataGrid);
             this.Controls.Add(this.button8);
             this.Controls.Add(this.button7);
             this.Controls.Add(this.button6);
             this.Controls.Add(this.button5);
+            this.Controls.Add(this.PWlabel);
             this.Controls.Add(this.button4);
             this.Controls.Add(this.listBox1);
+            this.Controls.Add(this.PWTextBox);
             this.Controls.Add(this.button3);
+            this.Controls.Add(this.Userlabel);
+            this.Controls.Add(this.UserTextBox);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.button9);
             this.Controls.Add(this.button1);
@@ -551,7 +613,6 @@
             this.Controls.Add(this.gbTime);
             this.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.Name = "frmMain";
-            this.Text = "TDF Dow 30  v1.31";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.frmMain_FormClosing);
             this.Load += new System.EventHandler(this.frmMain_Load);
             this.groupBox5.ResumeLayout(false);
@@ -565,6 +626,7 @@
             this.gbTime.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.symbolDataGrid)).EndInit();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -609,6 +671,11 @@
         private System.Windows.Forms.Timer ResetTimer;
         private System.Windows.Forms.Button button8;
         private System.Windows.Forms.Button button9;
+        private System.Windows.Forms.Label ServerResetLabel;
+        private System.Windows.Forms.Label DailyResetLabel;
+        private System.Windows.Forms.Label DataResetLabel;
+        private System.Windows.Forms.TextBox ServerTextBox;
+        private System.Windows.Forms.Label label15;
     }
 }
 

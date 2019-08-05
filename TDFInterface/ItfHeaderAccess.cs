@@ -111,18 +111,11 @@ namespace TDFInterface
                     buflen = data.Length - 20;
                 
                 byte[] mess = new byte[buflen + 1];
-                //int messageLen = mess.Length;
-                //Array.Copy(data, 21, mess, 0, buflen);
                 Array.Copy(data, 21, mess, 0, buflen - 1);
-                //itf.Message = mess;
                 itf.Message.AddRange(mess);
                 itf.totalMessageSize = itf.Message.Count + 20;
             
             }
-
-            //LR.messageType = itfh.msgType;
-            //LR.responseType = rdatah.respType;
-            //LR.responseCtrl = rdatah.respCtrl;
 
             itf.itf_Header = itfh;
             itf.data_Header = rdatah;
@@ -209,29 +202,62 @@ namespace TDFInterface
 
             int messageLength = itfsh.msgSize - itfsh.dataOffset - 6;
 
-                
-                int buflen = 0;
+            int buflen = 0;
 
-                if (itfsh.msgSize < data.Length)
-                    buflen = itfsh.msgSize - 6 + 1;
-                else
-                    buflen = data.Length - 26;
+            if (itfsh.msgSize < data.Length)
+                buflen = itfsh.msgSize - 6 + 1;
+            else
+                buflen = data.Length - 26;
 
-                byte[] mess = new byte[buflen + 1];
-                Array.Copy(data, 5, mess, 0, buflen - 1);
-                itfu.Message.AddRange(mess);
-                itfu.totalMessageSize = itfu.Message.Count + 6;
-
-            
-            //LR.messageType = itfsh.msgType;
-            //LR.responseType = 0;
-            //LR.responseCtrl = 0;
+            byte[] mess = new byte[buflen + 1];
+            Array.Copy(data, 5, mess, 0, buflen - 1);
+            itfu.Message.AddRange(mess);
+            itfu.totalMessageSize = itfu.Message.Count + 6;
 
             itfu.itf_Short_Header = itfsh;
             
             return itfu;
         }
 
+        public itf_Control_Message ParseItfControlMessage(byte[] ldata)
+        {
+
+            itf_Short_Header itfsh = new itf_Short_Header();
+            Control_Message_Header cmh = new Control_Message_Header();
+            itf_Control_Message icm = new itf_Control_Message();
+
+            byte[] data = ldata.ToArray();
+
+            itfsh.sync = data[0];
+            itfsh.msgSize = BitConverter.ToUInt16(data, 1);
+            itfsh.msgSize = (ushort)((itfsh.msgSize & 0xFFU) << 8 | (itfsh.msgSize & 0xFF00U) >> 8); // reverse bytes
+            itfsh.dataOffset = data[3];
+            itfsh.msgType = data[4];
+
+            cmh.numRec = BitConverter.ToUInt16(data, 5);
+            cmh.messageCategory = data[7];
+            cmh.messageCode = data[8];
+
+            int messageLength = itfsh.msgSize - itfsh.dataOffset - 6;
+
+
+            int buflen = 0;
+
+            if (itfsh.msgSize < data.Length)
+                buflen = itfsh.msgSize - 6 + 1;
+            else
+                buflen = data.Length - 26;
+
+            byte[] mess = new byte[buflen + 1];
+            Array.Copy(data, 9, mess, 0, buflen - 1);
+            icm.Message.AddRange(mess);
+            icm.totalMessageSize = icm.Message.Count + 6;
+
+            icm.itf_Short_Header = itfsh;
+            icm.control_Message_Header = cmh;
+
+            return icm;
+        }
 
         #endregion
     }

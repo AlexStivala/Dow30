@@ -130,6 +130,7 @@ namespace TDFInterface
         public string fieldFmtOptional { get; set; }
         public byte fieldDataType { get; set; }
         public string symbol { get; set; }
+        public string symbolEx { get; set; }
         public string symbolFull { get; set; }
         public int queryType { get; set; }
         public float fData { get; set; }
@@ -160,9 +161,10 @@ namespace TDFInterface
     public class symbolData
     {
         public string symbol { get; set; }
+        public string symbolEx { get; set; }
         public string symbolFull { get; set; }
-        public string name { get; set; }
-        public UInt16 seqId { get; set; }
+        public string company_Name { get; set; }
+        public UInt32 seqId { get; set; }
         public int queryType { get; set; }
         public string queryStr { get; set; }
         public int sectyType { get; set; }
@@ -174,7 +176,7 @@ namespace TDFInterface
         public float lo { get; set; }
         public float annHi { get; set; }
         public float annLo { get; set; }
-        public Int32 cumVol { get; set; }
+        public Int64 cumVol { get; set; }
         public float peRatio { get; set; }
         public float eps { get; set; }
         public float divAnn { get; set; }
@@ -183,6 +185,7 @@ namespace TDFInterface
         public float lastActivity { get; set; }
         public float lastActivityNetChg { get; set; }
         public float lastActivityPcntChg { get; set; }
+        public Int64 lastActivityVol { get; set; }
         public float intRate { get; set; }
         public float bidYld { get; set; }
         public float bidNetChg { get; set; }
@@ -195,35 +198,25 @@ namespace TDFInterface
         public float yld { get; set; }
         public UInt16 prcFmtCode { get; set; }
         public Int64 companyShrsOutstanding { get; set; }
+        public float yldNetChg { get; set; }
+
+        public float Price { get; set; }
+        public float Change { get; set; }
+        public float ABSChange { get; set; }
+        public float PercentChange { get; set; }
+        public float BasisPoints { get; set; }
+
+        public Int32 isiErrCode { get; set; }
+        public string errMsg { get; set; }
+        public string issuerName { get; set; }
+        public float setPrc { get; set; }
+        public float ysetPrc { get; set; }
+
         public DateTime updated { get; set; }
-        public bool updateFlag { get; set; }
         
     }
-    public class SymbolUpdateEventArgs : EventArgs
-    {
-        public symbolData symbolUpdate { get; set; }
-    }
-    public class ChartLiveUpdateEventArgs : EventArgs
-    {
-        public symbolData symbolUpdate { get; set; }
-    }
-
-    public class ChartUpdateEventArgs : EventArgs
-    {
-        public Chart_Info chartInfo { get; set; }
-        public Chart_Data chartData { get; set; }
-    }
-
-    public class ChartClosedEventArgs : EventArgs
-    {
-        public string symbol1 { get; set; }
-        public string symbol2 { get; set; }
-    }
-    public class SymbolUpdateClosedEventArgs : EventArgs
-    {
-        public string symbol1 { get; set; }
-    }
-
+    
+    
 
     public struct  Chart_DP
     {
@@ -236,42 +229,50 @@ namespace TDFInterface
         public string p3 { get; set; }
         public string p4 { get; set; }
         public string p5 { get; set; }
+        public string halted { get; set; }
+
         public string close { get; set; }
         public DateTime timestamp { get; set; }
 
     }
-    public struct Chart_Info
+    public class Chart_Info
     {
         public int chartSelection { get; set; }
         public int chartType { get; set; }
         public string chartDuration { get; set; }
         public string chartDesc { get; set; }
+        public bool relative { get; set; }
         public int interval { get; set; }
         public string period { get; set; }
+        public string StrtTimestamp { get; set; }
+        public string EndTimestamp { get; set; }
         public int numSymbols { get; set; }
         public int numQueries { get; set; }
         public int numCharts { get; set; }
-        public string symbol1 { get; set; }
-        public string symbol2 { get; set; }
-        public int seqId1 { get; set; }
-        public int seqId2 { get; set; }
-        public string StrtTimestamp1 { get; set; }
-        public string EndTimestamp1 { get; set; }
-        public string StrtTimestamp2 { get; set; }
-        public string EndTimestamp2 { get; set; }
-        public string QueryStr1 { get; set; }
-        public string QueryStr2 { get; set; }
+        public int pcntChgMode { get; set; }
+        public int requestId { get; set; }
 
-
+        public List<uint> seqIds = new List<uint>();
+        public List<string> symbols = new List<string>();
+        public List<string> Queries = new List<string>();
+        //public List<Chart_Def> chartList = new List<Chart_Def>();
     }
 
     public class Chart_Data
     {
         public string symbol { get; set; }
-        public Chart_Info chartInfo { get; set; }
+        public string company_Name { get; set; }
+        public string id { get; set; }
+        public string chartDesc { get; set; }
+        public int chartSelection { get; set; }
+        public bool relative { get; set; }
         public float trdPrc { get; set; }
         public float netChg { get; set; }
         public float pcntChg { get; set; }
+        public float ycls { get; set; }
+        public float prevClose { get; set; }
+        public float endClose { get; set; }
+        public int pcntChgMode { get; set; }
         public bool tickFlag { get; set; }
         public string exchange { get; set; }
         public string currency { get; set; }
@@ -282,6 +283,7 @@ namespace TDFInterface
         public string frequency { get; set; }
         public int numDP { get; set; }
         public int interval { get; set; }
+        public string period { get; set; }
         public DateTime fromDateTime { get; set; }
         public DateTime toDateTime { get; set; }
         public string datasetType { get; set; }
@@ -300,9 +302,12 @@ namespace TDFInterface
         public DateTime dateHi { get; set; }
         public float dataLo { get; set; }
         public DateTime dateLo { get; set; }
+        public Change_Data change = new Change_Data();
+        public string statStr { get; set; }
+        public int requestId { get; set; }
 
-        public List<Chart_DP> dataPts = new List<Chart_DP>(); 
-        
+        public List<Chart_DP> dataPts = new List<Chart_DP>();
+
     }
     public struct PreProXML
     {
@@ -316,9 +321,64 @@ namespace TDFInterface
     {
         public string headerInfo { get; set; }
         public string title { get; set; }
+        public string pageCode { get; set; }
+        public List<string> symbols = new List<string>();
         public List<string> colNames = new List<string>();
         public List<Dictionary<string, string>> rows = new List<Dictionary<string, string>>();
 
     }
+
+    public class Change_Data
+    {
+        public float chgFrmStart { get; set; }
+        public float pctChgFrmStart { get; set; }
+
+    }
+
+    public class Chart_Data_Def
+    {
+        public int chartId { get; set; }
+        public int qType { get; set; }
+        public uint seqId { get; set; }
+        public bool ready { get; set; }
+    }
+
+    public class Chart_Def
+    {
+        public int chartId { get; set; }
+        public List<Chart_Data_Def> chartDataInfo = new List<Chart_Data_Def>();
+    }
+
+    public class ChangeSince_Info
+    {
+        public string description { get; set; }
+        public string StrtTimestamp { get; set; }
+        public int numSymbols { get; set; }
+        public int numQueries { get; set; }
+        public int pcntChgMode { get; set; }
+
+        public List<uint> seqIds = new List<uint>();
+        public List<string> symbols = new List<string>();
+        public List<string> Queries = new List<string>();
+        public List<float> refVals = new List<float>();
+
+    }
+
+    public class itf_Control_Message
+    {
+        public itf_Short_Header itf_Short_Header { get; set; }
+        public Control_Message_Header control_Message_Header { get; set; }
+        public List<byte> Message = new List<byte>();
+        public Int32 totalMessageSize { get; set; }
+
+    }
+    public class Control_Message_Header
+    {
+        public ushort numRec { get; set; }
+        public byte messageCategory { get; set; }
+        public byte messageCode { get; set; }
+
+    }
+
 }
 
