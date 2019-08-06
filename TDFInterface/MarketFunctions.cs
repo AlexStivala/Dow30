@@ -644,7 +644,7 @@ namespace TDFInterface
             sd.isiErrCode = 0;
             sd.errMsg = "";
 
-            TDFGlobals.brokerSymbols.Add(sd);
+            TDFGlobals.symbols.Add(sd);
             
             if (TDFGlobals.TRConnected)
             {
@@ -674,7 +674,7 @@ namespace TDFInterface
                         if (sym != oldSym && sym != null)
                         {
                             s = TDFGlobals.financialResults[i].symbolFull;
-                            TDFGlobals.brokerSymbols[0].symbol = sym;
+                            TDFGlobals.symbols[0].symbol = sym;
                             oldSym = sym;
                         }
 
@@ -698,8 +698,8 @@ namespace TDFInterface
                 }
             }
 
-            sd = TDFGlobals.brokerSymbols[0];
-            TDFGlobals.brokerSymbols.Clear();
+            sd = TDFGlobals.symbols[0];
+            TDFGlobals.symbols.Clear();
             return sd;
         }
 

@@ -1885,63 +1885,70 @@ namespace TDFInterface
         #region Symbol functions
         public static void InitializeSymbolFields()
         {
-            // monitored fields
-            TDFGlobals.starredFields.Add("isiErrCode"); // 0
-            TDFGlobals.starredFields.Add("errMsg"); // 1
-            TDFGlobals.starredFields.Add("sectyType"); // 2
-            TDFGlobals.starredFields.Add("trdPrc"); // 3
-            TDFGlobals.starredFields.Add("netChg"); // 4
-            TDFGlobals.starredFields.Add("pcntChg"); //5
-            TDFGlobals.starredFields.Add("cumVol"); // 6
-            TDFGlobals.starredFields.Add("hi"); // 7
-            TDFGlobals.starredFields.Add("lo"); // 8
-            TDFGlobals.starredFields.Add("opn"); // 9
-            TDFGlobals.starredFields.Add("ycls"); //10
-            TDFGlobals.starredFields.Add("annHi"); // 11
-            TDFGlobals.starredFields.Add("annLo");// 12
-            TDFGlobals.starredFields.Add("lastActivity"); // 13
-            TDFGlobals.starredFields.Add("lastActivityNetChg"); // 14
-            TDFGlobals.starredFields.Add("lastActivityPcntChg"); // 15
-            TDFGlobals.starredFields.Add("lastActivityVol"); // 16
-            TDFGlobals.starredFields.Add("ask"); // 17
-            TDFGlobals.starredFields.Add("askYld"); // 18
-            TDFGlobals.starredFields.Add("bid"); // 19
-            TDFGlobals.starredFields.Add("bidYld"); // 20
-            TDFGlobals.starredFields.Add("bidNetChg"); // 21
-            TDFGlobals.starredFields.Add("bidYldNetChg"); // 22
-            TDFGlobals.starredFields.Add("yld"); // 23
-            TDFGlobals.starredFields.Add("yldNetChg"); // 24
-            TDFGlobals.starredFields.Add("setPrc"); // 25
-            TDFGlobals.starredFields.Add("monthClsPrc"); //26
-            TDFGlobals.starredFields.Add("yrClsPrc"); // 27
-            TDFGlobals.starredFields.Add("divAnn"); // 28
-            TDFGlobals.starredFields.Add("intRate"); // 29
-            TDFGlobals.starredFields.Add("peRatio"); // 30
-            TDFGlobals.starredFields.Add("eps"); // 31
-            TDFGlobals.starredFields.Add("mktCap"); //32
-            TDFGlobals.starredFields.Add("companyShrsOutstanding"); // 33
-            TDFGlobals.starredFields.Add("symbol"); // 34
-            TDFGlobals.starredFields.Add("prcFmtCode"); // 35
-            TDFGlobals.starredFields.Add("issuerName"); // 36
-            TDFGlobals.starredFields.Add("ysetPrc"); // 37
 
-
-            // Initialize catalog array
-            for (int i = 0; i < 150; i++)
+            try
             {
-                for (int j = 0; j < 60; j++)
+                // monitored fields
+                TDFGlobals.starredFields.Add("isiErrCode"); // 0
+                TDFGlobals.starredFields.Add("errMsg"); // 1
+                TDFGlobals.starredFields.Add("sectyType"); // 2
+                TDFGlobals.starredFields.Add("trdPrc"); // 3
+                TDFGlobals.starredFields.Add("netChg"); // 4
+                TDFGlobals.starredFields.Add("pcntChg"); //5
+                TDFGlobals.starredFields.Add("cumVol"); // 6
+                TDFGlobals.starredFields.Add("hi"); // 7
+                TDFGlobals.starredFields.Add("lo"); // 8
+                TDFGlobals.starredFields.Add("opn"); // 9
+                TDFGlobals.starredFields.Add("ycls"); //10
+                TDFGlobals.starredFields.Add("annHi"); // 11
+                TDFGlobals.starredFields.Add("annLo");// 12
+                TDFGlobals.starredFields.Add("lastActivity"); // 13
+                TDFGlobals.starredFields.Add("lastActivityNetChg"); // 14
+                TDFGlobals.starredFields.Add("lastActivityPcntChg"); // 15
+                TDFGlobals.starredFields.Add("lastActivityVol"); // 16
+                TDFGlobals.starredFields.Add("ask"); // 17
+                TDFGlobals.starredFields.Add("askYld"); // 18
+                TDFGlobals.starredFields.Add("bid"); // 19
+                TDFGlobals.starredFields.Add("bidYld"); // 20
+                TDFGlobals.starredFields.Add("bidNetChg"); // 21
+                TDFGlobals.starredFields.Add("bidYldNetChg"); // 22
+                TDFGlobals.starredFields.Add("yld"); // 23
+                TDFGlobals.starredFields.Add("yldNetChg"); // 24
+                TDFGlobals.starredFields.Add("setPrc"); // 25
+                TDFGlobals.starredFields.Add("monthClsPrc"); //26
+                TDFGlobals.starredFields.Add("yrClsPrc"); // 27
+                TDFGlobals.starredFields.Add("divAnn"); // 28
+                TDFGlobals.starredFields.Add("intRate"); // 29
+                TDFGlobals.starredFields.Add("peRatio"); // 30
+                TDFGlobals.starredFields.Add("eps"); // 31
+                TDFGlobals.starredFields.Add("mktCap"); //32
+                TDFGlobals.starredFields.Add("companyShrsOutstanding"); // 33
+                TDFGlobals.starredFields.Add("symbol"); // 34
+                TDFGlobals.starredFields.Add("prcFmtCode"); // 35
+                TDFGlobals.starredFields.Add("issuerName"); // 36
+                TDFGlobals.starredFields.Add("ysetPrc"); // 37
+
+
+                // Initialize catalog array
+                for (int i = 0; i < 150; i++)
                 {
-                    TDFGlobals.CatalogData[i, j] = 0;
+                    for (int j = 0; j < 60; j++)
+                    {
+                        TDFGlobals.CatalogData[i, j] = 0;
+                    }
                 }
+
+
+                MarketModel.ServerReset sr = MarketFunctions.GetServerResetSched(TDFGlobals.ServerID);
+                TDFConnections.nextServerReset = TDFConnections.GetNextServerResetTime(sr);
+                TDFConnections.nextDailyReset = TDFConnections.GetNextDailyResetTime(sr);
+
+                TDFGlobals.marketOpenStatus = MarketFunctions.IsMarketOpen();
             }
-
-            
-            MarketModel.ServerReset sr = MarketFunctions.GetServerResetSched(TDFGlobals.ServerID);
-            TDFConnections.nextServerReset = TDFConnections.GetNextServerResetTime(sr);
-            TDFConnections.nextDailyReset = TDFConnections.GetNextDailyResetTime(sr);
-
-            TDFGlobals.marketOpenStatus = MarketFunctions.IsMarketOpen();
-
+            catch (Exception ex)
+            {
+                log.Error($"InitializeSymbolFields Error: {ex}");
+            }
 
         }
 
@@ -1952,15 +1959,15 @@ namespace TDFInterface
             {
                 string s;
                 int indx = -1;
-                for (int i = 0; i < TDFGlobals.brokerSymbols.Count; i++)
+                for (int i = 0; i < TDFGlobals.symbols.Count; i++)
                 {
-                    if (TDFGlobals.brokerSymbols[i].symbol == sym)
+                    if (TDFGlobals.symbols[i].symbol == sym)
                         indx = i;
                 }
 
 
                 if (indx < 0)
-                    s = $"sym: {sym}  Count: {TDFGlobals.brokerSymbols.Count}";
+                    s = $"sym: {sym}  Count: {TDFGlobals.symbols.Count}";
 
                 return indx;
             }
@@ -1975,9 +1982,9 @@ namespace TDFInterface
         private int GetSymbolIndxBySeq(string sym, uint seqId)
         {
             int indx = -1;
-            for (int i = 0; i < TDFGlobals.brokerSymbols.Count; i++)
+            for (int i = 0; i < TDFGlobals.symbols.Count; i++)
             {
-                if (TDFGlobals.brokerSymbols[i].symbol == sym && TDFGlobals.brokerSymbols[i].seqId == seqId)
+                if (TDFGlobals.symbols[i].symbol == sym && TDFGlobals.symbols[i].seqId == seqId)
                     indx = i;
             }
             if (indx < 0)
@@ -1993,146 +2000,146 @@ namespace TDFInterface
             {
                 if (symIndx >= 0)
                 {
-                    TDFGlobals.brokerSymbols[symIndx].symbolFull = f[i].symbolFull;
+                    TDFGlobals.symbols[symIndx].symbolFull = f[i].symbolFull;
                     if (f[i].show)
                     {
                         switch (f[i].dataIndx)
                         {
                             case 0:
-                                TDFGlobals.brokerSymbols[symIndx].isiErrCode = f[i].iData;
+                                TDFGlobals.symbols[symIndx].isiErrCode = f[i].iData;
                                 break;
                             case 1:
-                                TDFGlobals.brokerSymbols[symIndx].errMsg = f[i].sData;
+                                TDFGlobals.symbols[symIndx].errMsg = f[i].sData;
                                 break;
                             case 2:
-                                TDFGlobals.brokerSymbols[symIndx].sectyType = f[i].bData;
+                                TDFGlobals.symbols[symIndx].sectyType = f[i].bData;
                                 break;
                             case 3:
-                                TDFGlobals.brokerSymbols[symIndx].trdPrc = f[i].fData;
+                                TDFGlobals.symbols[symIndx].trdPrc = f[i].fData;
 
-                                if (TDFGlobals.brokerSymbols[symIndx].sectyType == 0 || TDFGlobals.brokerSymbols[symIndx].sectyType == 4 || TDFGlobals.brokerSymbols[symIndx].sectyType == 5)
-                                    TDFGlobals.brokerSymbols[symIndx].Price = f[i].fData;
+                                if (TDFGlobals.symbols[symIndx].sectyType == 0 || TDFGlobals.symbols[symIndx].sectyType == 4 || TDFGlobals.symbols[symIndx].sectyType == 5)
+                                    TDFGlobals.symbols[symIndx].Price = f[i].fData;
                                 break;
                             case 4:
-                                TDFGlobals.brokerSymbols[symIndx].netChg = f[i].fData;
+                                TDFGlobals.symbols[symIndx].netChg = f[i].fData;
 
-                                if (TDFGlobals.brokerSymbols[symIndx].sectyType == 0 || TDFGlobals.brokerSymbols[symIndx].sectyType == 4 ||
-                                        TDFGlobals.brokerSymbols[symIndx].sectyType == 5 || TDFGlobals.brokerSymbols[symIndx].sectyType == 15)
+                                if (TDFGlobals.symbols[symIndx].sectyType == 0 || TDFGlobals.symbols[symIndx].sectyType == 4 ||
+                                        TDFGlobals.symbols[symIndx].sectyType == 5 || TDFGlobals.symbols[symIndx].sectyType == 15)
                                 {
-                                    TDFGlobals.brokerSymbols[symIndx].Change = f[i].fData;
-                                    TDFGlobals.brokerSymbols[symIndx].ABSChange = Math.Abs(TDFGlobals.brokerSymbols[symIndx].Change);
+                                    TDFGlobals.symbols[symIndx].Change = f[i].fData;
+                                    TDFGlobals.symbols[symIndx].ABSChange = Math.Abs(TDFGlobals.symbols[symIndx].Change);
                                 }
                                 break;
                             case 5:
-                                TDFGlobals.brokerSymbols[symIndx].pcntChg = f[i].fData;
-                                if (TDFGlobals.brokerSymbols[symIndx].sectyType == 0 || TDFGlobals.brokerSymbols[symIndx].sectyType == 4 || TDFGlobals.brokerSymbols[symIndx].sectyType == 5)
-                                    TDFGlobals.brokerSymbols[symIndx].PercentChange = f[i].fData;
+                                TDFGlobals.symbols[symIndx].pcntChg = f[i].fData;
+                                if (TDFGlobals.symbols[symIndx].sectyType == 0 || TDFGlobals.symbols[symIndx].sectyType == 4 || TDFGlobals.symbols[symIndx].sectyType == 5)
+                                    TDFGlobals.symbols[symIndx].PercentChange = f[i].fData;
                                 break;
                             case 6:
-                                TDFGlobals.brokerSymbols[symIndx].cumVol = f[i].iData;
+                                TDFGlobals.symbols[symIndx].cumVol = f[i].iData;
                                 break;
                             case 7:
-                                TDFGlobals.brokerSymbols[symIndx].hi = f[i].fData;
+                                TDFGlobals.symbols[symIndx].hi = f[i].fData;
                                 break;
                             case 8:
-                                TDFGlobals.brokerSymbols[symIndx].lo = f[i].fData;
+                                TDFGlobals.symbols[symIndx].lo = f[i].fData;
                                 break;
                             case 9:
-                                TDFGlobals.brokerSymbols[symIndx].opn = f[i].fData;
+                                TDFGlobals.symbols[symIndx].opn = f[i].fData;
                                 break;
                             case 10:
-                                TDFGlobals.brokerSymbols[symIndx].ycls = f[i].fData;
+                                TDFGlobals.symbols[symIndx].ycls = f[i].fData;
                                 break;
                             case 11:
-                                TDFGlobals.brokerSymbols[symIndx].annHi = f[i].fData;
+                                TDFGlobals.symbols[symIndx].annHi = f[i].fData;
                                 break;
                             case 12:
-                                TDFGlobals.brokerSymbols[symIndx].annLo = f[i].fData;
+                                TDFGlobals.symbols[symIndx].annLo = f[i].fData;
                                 break;
                             case 13:
-                                TDFGlobals.brokerSymbols[symIndx].lastActivity = f[i].fData;
+                                TDFGlobals.symbols[symIndx].lastActivity = f[i].fData;
                                 break;
                             case 14:
-                                TDFGlobals.brokerSymbols[symIndx].lastActivityNetChg = f[i].fData;
+                                TDFGlobals.symbols[symIndx].lastActivityNetChg = f[i].fData;
                                 break;
                             case 15:
-                                TDFGlobals.brokerSymbols[symIndx].lastActivityPcntChg = f[i].fData;
+                                TDFGlobals.symbols[symIndx].lastActivityPcntChg = f[i].fData;
                                 break;
                             case 16:
-                                TDFGlobals.brokerSymbols[symIndx].lastActivityVol = f[i].iData;
+                                TDFGlobals.symbols[symIndx].lastActivityVol = f[i].iData;
                                 break;
                             case 17:
-                                TDFGlobals.brokerSymbols[symIndx].ask = f[i].fData;
+                                TDFGlobals.symbols[symIndx].ask = f[i].fData;
                                 break;
                             case 18:
-                                TDFGlobals.brokerSymbols[symIndx].askYld = f[i].fData;
+                                TDFGlobals.symbols[symIndx].askYld = f[i].fData;
                                 break;
                             case 19:
-                                TDFGlobals.brokerSymbols[symIndx].bid = f[i].fData;
-                                if (TDFGlobals.brokerSymbols[symIndx].sectyType == 15)
-                                    TDFGlobals.brokerSymbols[symIndx].Price = f[i].fData;
+                                TDFGlobals.symbols[symIndx].bid = f[i].fData;
+                                if (TDFGlobals.symbols[symIndx].sectyType == 15)
+                                    TDFGlobals.symbols[symIndx].Price = f[i].fData;
                                 break;
                             case 20:
-                                TDFGlobals.brokerSymbols[symIndx].bidYld = f[i].fData;
-                                if (TDFGlobals.brokerSymbols[symIndx].sectyType == 7)
-                                    TDFGlobals.brokerSymbols[symIndx].Price = f[i].fData;
+                                TDFGlobals.symbols[symIndx].bidYld = f[i].fData;
+                                if (TDFGlobals.symbols[symIndx].sectyType == 7)
+                                    TDFGlobals.symbols[symIndx].Price = f[i].fData;
                                 break;
                             case 21:
-                                TDFGlobals.brokerSymbols[symIndx].bidNetChg = f[i].fData;
+                                TDFGlobals.symbols[symIndx].bidNetChg = f[i].fData;
                                 break;
                             case 22:
-                                TDFGlobals.brokerSymbols[symIndx].bidYldNetChg = f[i].fData;
+                                TDFGlobals.symbols[symIndx].bidYldNetChg = f[i].fData;
                                 break;
                             case 23:
-                                TDFGlobals.brokerSymbols[symIndx].yld = f[i].fData;
+                                TDFGlobals.symbols[symIndx].yld = f[i].fData;
                                 break;
                             case 24:
-                                TDFGlobals.brokerSymbols[symIndx].yldNetChg = f[i].fData;
-                                if (TDFGlobals.brokerSymbols[symIndx].sectyType == 7)
+                                TDFGlobals.symbols[symIndx].yldNetChg = f[i].fData;
+                                if (TDFGlobals.symbols[symIndx].sectyType == 7)
                                 {
-                                    TDFGlobals.brokerSymbols[symIndx].Change = f[i].fData;
-                                    TDFGlobals.brokerSymbols[symIndx].ABSChange = Math.Abs(TDFGlobals.brokerSymbols[symIndx].Change);
-                                    TDFGlobals.brokerSymbols[symIndx].BasisPoints = f[i].fData * 100.0F;
+                                    TDFGlobals.symbols[symIndx].Change = f[i].fData;
+                                    TDFGlobals.symbols[symIndx].ABSChange = Math.Abs(TDFGlobals.symbols[symIndx].Change);
+                                    TDFGlobals.symbols[symIndx].BasisPoints = f[i].fData * 100.0F;
                                 }
                                 break;
                             case 25:
-                                TDFGlobals.brokerSymbols[symIndx].setPrc = f[i].fData;
+                                TDFGlobals.symbols[symIndx].setPrc = f[i].fData;
                                 break;
                             case 26:
-                                TDFGlobals.brokerSymbols[symIndx].monthClsPrc = f[i].fData;
+                                TDFGlobals.symbols[symIndx].monthClsPrc = f[i].fData;
                                 break;
                             case 27:
-                                TDFGlobals.brokerSymbols[symIndx].yrClsPrc = f[i].fData;
+                                TDFGlobals.symbols[symIndx].yrClsPrc = f[i].fData;
                                 break;
                             case 28:
-                                TDFGlobals.brokerSymbols[symIndx].divAnn = f[i].fData;
+                                TDFGlobals.symbols[symIndx].divAnn = f[i].fData;
                                 break;
                             case 29:
-                                TDFGlobals.brokerSymbols[symIndx].intRate = f[i].fData;
+                                TDFGlobals.symbols[symIndx].intRate = f[i].fData;
                                 break;
                             case 30:
-                                TDFGlobals.brokerSymbols[symIndx].peRatio = f[i].fData;
+                                TDFGlobals.symbols[symIndx].peRatio = f[i].fData;
                                 break;
                             case 31:
-                                TDFGlobals.brokerSymbols[symIndx].eps = f[i].fData;
+                                TDFGlobals.symbols[symIndx].eps = f[i].fData;
                                 break;
                             case 32:
-                                TDFGlobals.brokerSymbols[symIndx].mktCap = f[i].fData;
+                                TDFGlobals.symbols[symIndx].mktCap = f[i].fData;
                                 break;
                             case 33:
-                                TDFGlobals.brokerSymbols[symIndx].companyShrsOutstanding = f[i].iData;
+                                TDFGlobals.symbols[symIndx].companyShrsOutstanding = f[i].iData;
                                 break;
                             case 34:
-                                TDFGlobals.brokerSymbols[symIndx].symbol = f[i].sData;
+                                TDFGlobals.symbols[symIndx].symbol = f[i].sData;
                                 break;
                             case 35:
-                                TDFGlobals.brokerSymbols[symIndx].prcFmtCode = (ushort)f[i].iData;
+                                TDFGlobals.symbols[symIndx].prcFmtCode = (ushort)f[i].iData;
                                 break;
                             case 36:
-                                TDFGlobals.brokerSymbols[symIndx].issuerName = f[i].sData;
+                                TDFGlobals.symbols[symIndx].issuerName = f[i].sData;
                                 break;
                             case 37:
-                                TDFGlobals.brokerSymbols[symIndx].ysetPrc = f[i].fData;
+                                TDFGlobals.symbols[symIndx].ysetPrc = f[i].fData;
                                 break;
 
                         }
@@ -2186,11 +2193,11 @@ namespace TDFInterface
                             */
 
                             symbolIndex = TDFProcessingFunctions.GetSymbolIndx(TDFGlobals.financialResults[i].symbol);
-                            TDFGlobals.seqIdsrecd[TDFGlobals.brokerSymbols[symbolIndex].seqId] = true;
+                            TDFGlobals.seqIdsrecd[TDFGlobals.symbols[symbolIndex].seqId] = true;
 
                             if (symbolIndex >= 0)
                             {
-                                TDFGlobals.brokerSymbols[symbolIndex].updated = DateTime.Now;
+                                TDFGlobals.symbols[symbolIndex].updated = DateTime.Now;
                             }
                             else
                             {
@@ -2321,7 +2328,7 @@ namespace TDFInterface
             log.Debug("Unsubscribing...");
             string quot = "\"";
 
-            foreach (symbolData sd in TDFGlobals.brokerSymbols)
+            foreach (symbolData sd in TDFGlobals.symbols)
             {
                 sym = sd.symbolFull;
                 queryStr = $"DELETE FROM SUBSCRIPTION_TABLE WHERE channelName = DYNAMIC_QUOTES AND usrSymbol = {quot}{sym}{quot}";

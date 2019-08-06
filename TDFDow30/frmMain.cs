@@ -53,7 +53,7 @@ namespace TDFDow30
         public ushort session_ID = 0xffff;
 
 
-        public Int32[,] CatalogData = new int[150, 60];
+        //public Int32[,] CatalogData = new int[150, 60];
         public string msgStr = "";
         public string XMLStr = "";
 
@@ -120,10 +120,9 @@ namespace TDFDow30
         public int dataLeft = 0;
 
         public bool dataReset = false;
-        public DateTime nextServerReset;
-        public DateTime nextDailyReset;
-        int ServerID = 0;
-
+        //public DateTime nextServerReset;
+        //public DateTime nextDailyReset;
+        
 
         TimeSpan marketOpen = new TimeSpan(9, 29, 58); //9:30 am
         TimeSpan marketClose = new TimeSpan(16, 10, 0); //4:06 pm  somtimes data is updated a bit after market close
@@ -262,7 +261,7 @@ namespace TDFDow30
                 debugMode = Properties.Settings.Default.DebugMode;
                 updateZipperFile = Properties.Settings.Default.updateZipperFile;
                 updateChartData = Properties.Settings.Default.updateChartData;
-                ServerID = Properties.Settings.Default.TDFServer_ID;
+                TDFGlobals.ServerID = Properties.Settings.Default.TDFServer_ID;
 
 
                 //disconnectTime = DateTime.Today + Properties.Settings.Default.Reset_Connection;
@@ -270,13 +269,8 @@ namespace TDFDow30
                 //    disconnectTime = disconnectTime.AddDays(1);
                 //refTime = DateTime.Today.AddHours(1);
 
-                MarketModel.ServerReset sr = MarketFunctions.GetServerResetSched(ServerID);
-                nextServerReset = TDFConnections.GetNextServerResetTime(sr);
-                nextDailyReset = TDFConnections.GetNextDailyResetTime(sr);
-                ServerResetLabel.Text = $"Next Server Reset: {nextServerReset}";
-                DailyResetLabel.Text = $"Next Daily Reset: {nextDailyReset}";
 
-
+                MarketModel.ServerReset sr = MarketFunctions.GetServerResetSched(TDFGlobals.ServerID);
                 IPAddress = sr.IPAddress;
                 UserName = sr.UserId;
                 PW = sr.PW;
@@ -286,10 +280,12 @@ namespace TDFDow30
                 PortTextBox.Text = Port;
                 UserTextBox.Text = UserName;
                 PWTextBox.Text = PW;
-                ServerTextBox.Text = ServerID.ToString();
+                ServerTextBox.Text = TDFGlobals.ServerID.ToString();
 
                 TDFGlobals.showAllFields = false;
 
+
+                /*
                 for (int i = 0; i < 150; i++)
                 {
                     for (int j = 0; j < 60; j++)
@@ -297,12 +293,19 @@ namespace TDFDow30
                         CatalogData[i, j] = 0;
                     }
                 }
+                */
+
+                TDFProcessingFunctions.InitializeSymbolFields();
+                ServerResetLabel.Text = $"Next Server Reset: {TDFConnections.nextServerReset}";
+                DailyResetLabel.Text = $"Next Daily Reset: {TDFConnections.nextDailyReset}";
 
                 // fields requested in hotboards
+                /*
                 TDFGlobals.starredFields.Add("trdPrc"); // 0
                 TDFGlobals.starredFields.Add("netChg"); // 1
                 TDFGlobals.starredFields.Add("ycls"); //2
                 TDFGlobals.starredFields.Add("pcntChg"); //3
+                */
                 /*
                 TDFGlobals.starredFields.Add("hi"); // 4
                 TDFGlobals.starredFields.Add("lo"); // 5
@@ -333,10 +336,6 @@ namespace TDFDow30
                 TDFGlobals.starredFields.Add("symbol"); // 30
                 */
 
-                // Log application start
-                log.Debug("\r\n\r\n*********** Starting TDFDow30 **********\r\n");
-
-
 
                 //XMLDataUpdated += new EventHandler<XMLUpdateEventArgs>(DisplayXMLData);
                 //SymbolDataUpdated += new EventHandler<SymbolUpdateEventArgs>(SymbolDataUpdated);
@@ -353,6 +352,10 @@ namespace TDFDow30
                 // Set version number
                 var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
                 this.Text = String.Format("TDF Dow30 Application  Version {0}", version);
+
+                // Log application start
+                log.Debug($"\r\n\r\n*********** Starting TDFDow30 v{version} **********\r\n");
+
 
                 TDFProcessingFunctions.sendBuf += new SendBuf(TRSendCommand);
                 TODTimer.Enabled = true;
@@ -1547,9 +1550,9 @@ namespace TDFDow30
         public void DisconnectFromTDF()
         {
             Logoff();
-            Thread.Sleep(200);
+            Thread.Sleep(1000);
             TRClientSocket.Disconnect();
-            Thread.Sleep(200);
+            Thread.Sleep(1000);
             
         }
 
@@ -1634,23 +1637,23 @@ namespace TDFDow30
                 timerFlag = false;
 
             // if server is scheduled for reset - Get next time for both resets
-            if (DateTime.Now > nextServerReset)
+            if (DateTime.Now > TDFConnections.nextServerReset)
             {
                 WatchdogTimer.Enabled = false;
-                MarketModel.ServerReset sr = MarketFunctions.GetServerResetSched(ServerID);
-                nextServerReset = TDFConnections.GetNextServerResetTime(sr);
-                nextDailyReset = TDFConnections.GetNextDailyResetTime(sr);
-                ServerResetLabel.Text = $"Next Server Reset: {nextServerReset}";
-                DailyResetLabel.Text = $"Next Daily Reset: {nextDailyReset}";
+                MarketModel.ServerReset sr = MarketFunctions.GetServerResetSched(TDFGlobals.ServerID);
+                TDFConnections.nextServerReset = TDFConnections.GetNextServerResetTime(sr);
+                TDFConnections.nextDailyReset = TDFConnections.GetNextDailyResetTime(sr);
+                ServerResetLabel.Text = $"Next Server Reset: {TDFConnections.nextServerReset}";
+                DailyResetLabel.Text = $"Next Daily Reset: {TDFConnections.nextDailyReset}";
 
                 TDFConnections.ServerReset(true);
             }
 
-            if (DateTime.Now > nextDailyReset)
+            if (DateTime.Now > TDFConnections.nextDailyReset)
             {
-                MarketModel.ServerReset sr = MarketFunctions.GetServerResetSched(ServerID);
-                nextDailyReset = TDFConnections.GetNextDailyResetTime(sr);
-                DailyResetLabel.Text = $"Next Daily Reset: {nextDailyReset}";
+                MarketModel.ServerReset sr = MarketFunctions.GetServerResetSched(TDFGlobals.ServerID);
+                TDFConnections.nextDailyReset = TDFConnections.GetNextDailyResetTime(sr);
+                DailyResetLabel.Text = $"Next Daily Reset: {TDFConnections.nextDailyReset}";
 
                 TDFConnections.ServerReset(false);
             }

@@ -108,7 +108,7 @@ namespace TDFDow30.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool DebugMode {
             get {
                 return ((bool)(this["DebugMode"]));
@@ -126,7 +126,7 @@ namespace TDFDow30.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
         public bool updateZipperFile {
             get {
                 return ((bool)(this["updateZipperFile"]));

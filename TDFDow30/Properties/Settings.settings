@@ -34,13 +34,13 @@
       <Value Profile="(Default)">p:\</Value>
     </Setting>
     <Setting Name="DebugMode" Type="System.Boolean" Scope="Application">
-      <Value Profile="(Default)">True</Value>
+      <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="spUpdate" Type="System.String" Scope="Application">
       <Value Profile="(Default)">sp_UpdateSymbolData</Value>
     </Setting>
     <Setting Name="updateZipperFile" Type="System.Boolean" Scope="Application">
-      <Value Profile="(Default)">False</Value>
+      <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="updateChartData" Type="System.Boolean" Scope="Application">
       <Value Profile="(Default)">True</Value>

@@ -105,7 +105,7 @@ namespace TDFInterface
     public class TDFGlobals
     {
         public static List<symbolData> symbols = new List<symbolData>();
-        public static List<symbolData> brokerSymbols = new List<symbolData>();
+        //public static List<symbolData> brokerSymbols = new List<symbolData>();
         public static List<MarketModel.DataRequests> dataRequests = new List<MarketModel.DataRequests>();
         public static List<byte> TRdata = new List<byte>();
         public static int dataLeft;

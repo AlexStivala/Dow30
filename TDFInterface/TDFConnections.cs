@@ -254,7 +254,7 @@ namespace TDFInterface
                 log.Debug("Unsubscribe complete.");
             }
             DisconnectFromTDF();
-            TDFGlobals.brokerSymbols.Clear();
+            TDFGlobals.symbols.Clear();
             TDFGlobals.financialResults.Clear();
 
             ReconnectTimer.Interval = 60000 * resetMinutes;
@@ -282,35 +282,49 @@ namespace TDFInterface
 
         public static DateTime GetNextServerResetTime(MarketModel.ServerReset sr)
         {
-            int weekNo = sr.weekNo;
-            DateTime now = DateTime.Now;
-            DayOfWeek resetDay = (DayOfWeek)sr.resetDay;
-            DateTime resetTime = sr.resetTime;
-            
-            int srDate = FindDay(now.Year, now.Month, resetDay, weekNo);
-            nextServerReset = new DateTime(now.Year, now.Month, srDate, resetTime.Hour, resetTime.Minute, resetTime.Second);
+            try
+            {
+                int weekNo = sr.weekNo;
+                DateTime now = DateTime.Now;
+                DayOfWeek resetDay = (DayOfWeek)sr.resetDay;
+                DateTime resetTime = sr.resetTime;
 
-            if (now.AddMinutes(3) > nextServerReset)
-                nextServerReset = nextServerReset.AddDays(28);
+                int srDate = FindDay(now.Year, now.Month, resetDay, weekNo);
+                nextServerReset = new DateTime(now.Year, now.Month, srDate, resetTime.Hour, resetTime.Minute, resetTime.Second);
 
-            nextServerReset = nextServerReset.AddMinutes(-2);
-            //ServerResetLabel.Text = $"Next Server Reset: {nextServerReset}";
+                if (now.AddMinutes(3) > nextServerReset)
+                    nextServerReset = nextServerReset.AddDays(28);
 
+                nextServerReset = nextServerReset.AddMinutes(-2);
+                //ServerResetLabel.Text = $"Next Server Reset: {nextServerReset}";
+
+            }
+            catch (Exception ex)
+            {
+                log.Error($"GetNextServerResetTime Error: {ex}");
+            }
             return nextServerReset;
 
         }
 
         public static DateTime GetNextDailyResetTime(MarketModel.ServerReset sr)
         {
-            DateTime disconnectTime;
             DateTime resetTime = sr.resetTime;
+            DateTime disconnectTime = sr.resetTime;
 
-            disconnectTime = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, resetTime.Hour, resetTime.Minute, resetTime.Second);
-            if (DateTime.Now.AddMinutes(3) >= disconnectTime)
-                disconnectTime = disconnectTime.AddDays(1);
+            try
+            {
+                
+                disconnectTime = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, resetTime.Hour, resetTime.Minute, resetTime.Second);
+                if (DateTime.Now.AddMinutes(3) >= disconnectTime)
+                    disconnectTime = disconnectTime.AddDays(1);
 
-            //DailyResetLabel.Text = $"Next Daily Reset: {disconnectTime}";
-
+                //DailyResetLabel.Text = $"Next Daily Reset: {disconnectTime}";
+            }
+            catch (Exception ex)
+            {
+                log.Error($"GetNextDailyResetTime Error: {ex}");
+            }
             return disconnectTime;
 
         }
