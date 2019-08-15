@@ -1134,7 +1134,8 @@ namespace TDFInterface
                                         }
                                         else
                                         {
-                                            TDFproc.ProcessFinancialData(TRmessage);
+                                            //TDFproc.ProcessFinancialData(TRmessage);
+                                            ProcessFinancialData(TRmessage);
                                             TDFGlobals.TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize + 1);
                                             TDFGlobals.dataLeft = TDFGlobals.TRdata.Count;
                                             TDFGlobals.seqIdsrecd[TRmessage.itf_Header.seqId] = true;
@@ -1228,7 +1229,7 @@ namespace TDFInterface
                     else
                         waitForData = true;
                 }
-                UpdateSymbols();
+                //UpdateSymbols();
             }
             catch (Exception ex)
             {
@@ -2247,8 +2248,8 @@ namespace TDFInterface
 
                 ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
                 byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, queryStr, TDFconstants.DATA_REQUEST, seqID);
-                //TRSendCommand(outputbuf);
-                sendBuf(outputbuf);
+                TDFConnections.TRSendCommand(outputbuf);
+                //sendBuf(outputbuf);
 
             }
         }
@@ -2301,8 +2302,8 @@ namespace TDFInterface
 
                 ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
                 byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, queryStr, TDFconstants.KEEP_ALIVE_RESPONSE, 0);
-                //TRSendCommand(outputbuf);
-                sendBuf(outputbuf);
+                TDFConnections.TRSendCommand(outputbuf);
+                //sendBuf(outputbuf);
                 //SendKeepAliveRequest(queryStr);
             }
             catch (Exception ex)
@@ -2315,8 +2316,8 @@ namespace TDFInterface
             
             ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
             byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, queryStr, TDFconstants.KEEP_ALIVE_REQUEST, 0);
-            //TRSendCommand(outputbuf);
-            sendBuf(outputbuf);
+            TDFConnections.TRSendCommand(outputbuf);
+            //sendBuf(outputbuf);
 
         }
 

@@ -90,7 +90,8 @@ namespace TDFInterface
                             done = true;
                             string queryStr = $"LOGON USERNAME={quot}{sr.UserId}{quot} PASSWORD={quot}{sr.PW}{quot}";
                             byte[] outputbuf = itfHeaderAccess.Build_Outbuf(TDFProcessingFunctions.stdHeadr, queryStr, TDFconstants.LOGON_REQUEST, 0);
-                            TDFProcessingFunctions.sendBuf(outputbuf);
+                            //TDFProcessingFunctions.sendBuf(outputbuf);
+                            TRSendCommand(outputbuf);
                         }
                         n++;
                     }
@@ -210,10 +211,12 @@ namespace TDFInterface
         {
             // Build Logon Message
             string queryStr = "LOGOFF";
-            log.Info("Logging off TDF");
+            log.Info("Logging off TDF...");
 
             ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
             byte[] outputbuf = itfHeaderAccess.Build_Outbuf(TDFProcessingFunctions.stdHeadr, queryStr, TDFconstants.LOGOFF_REQUEST, 0);
+            //TDFProcessingFunctions.sendBuf(outputbuf);
+
             TRSendCommand(outputbuf);
         }
         

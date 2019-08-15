@@ -49,7 +49,7 @@ namespace TDFDow30
         public string UserName = "";
         public string PW = "";
 
-        public string logResp = "";
+        //public string logResp = "";
         public ushort session_ID = 0xffff;
 
 
@@ -154,8 +154,8 @@ namespace TDFDow30
         /// </summary>
 
         // Declare TCP client sockets for Thomson Reuters communications
-        public AsyncClientSocket.ClientSocket TRClientSocket;
-        bool TRConnected = false;
+        //public AsyncClientSocket.ClientSocket TRClientSocket;
+        //bool TRConnected = false;
 
 
         #endregion
@@ -357,7 +357,7 @@ namespace TDFDow30
                 log.Debug($"\r\n\r\n*********** Starting TDFDow30 v{version} **********\r\n");
 
 
-                TDFProcessingFunctions.sendBuf += new SendBuf(TRSendCommand);
+                //TDFProcessingFunctions.sendBuf += new SendBuf(TRSendCommand);
                 TODTimer.Enabled = true;
 
                 
@@ -369,17 +369,77 @@ namespace TDFDow30
                 //log.Debug("frmMain Exception occurred during main form load", ex);
             }
             chartCnt = (Int16)(chartInterval - 3);
+            TDFConnections.ConnectToTDF(TDFGlobals.ServerID);
+            if (TDFGlobals.TRConnected == true)
+            {
+                pictureBox2.Visible = true;
+            }
+            lblLogResp.Text = TDFGlobals.logResp;
+
+            InitializeDow30Data();
             TODTimer.Enabled = true;
-            ConnectToTDF();
+            //ResetTimer.Enabled = true;
         }
 
+        public void InitializeDow30Data()
+        {
+            // get data from db table to get symbol list
+            string connection = $"SELECT * FROM {dbTableName}";
+            Dow30Data = Dow30Database.Dow30DB.GetSymbolDataCollection(connection, dbConn);
+            symbolDataGrid.DataSource = Dow30Data;
+
+            System.Threading.Thread.Sleep(1000);
+
+            // create symbol list and set up symbols collection
+            bool first = true;
+            symbolListStr = "";
+            uint ui = 0;
+            foreach (Dow30Database.Dow30DB.Dow30symbolData sd in Dow30Data)
+            {
+                TDFGlobals.Dow30symbols.Add(sd.SubscribeSymbol);
+                if (first == false)
+                {
+                    symbolListStr += ", " + sd.SubscribeSymbol;
+                }
+                else
+                {
+                    symbolListStr += sd.SubscribeSymbol;
+                    first = false;
+                }
+
+                symbolData sd1 = new symbolData();
+                if (dynamic)
+                    sd1.queryType = (int)QueryTypes.Dynamic_Quotes;
+                else
+                    sd1.queryType = (int)QueryTypes.Portfolio_Mgr;
+                sd1.queryStr = "";
+                sd1.symbol = sd.SubscribeSymbol;
+                sd1.company_Name = sd.DisplayName.ToUpper();
+                sd1.seqId = 5;
+                sd1.updated = DateTime.Now;
+                TDFGlobals.symbols.Add(sd1);
+                if (dynamic)
+                {
+                    ui++;
+                    IssueDynamicSubscriptionQuery(sd.SubscribeSymbol, ui);
+                    Thread.Sleep(50);
+                }
+
+            }
+            //label1.Text = symbolListStr;
+
+            // start data collection
+            timer1.Enabled = true;
+
+        }
 
 
         private void ConnectButton_Click(object sender, EventArgs e)
         {
-            ConnectToTDF();
+            TDFConnections.ConnectToTDF(TDFGlobals.ServerID);
         }
 
+        /*
         public void ConnectToTDF()
         {
             // Build Logon Message
@@ -392,25 +452,25 @@ namespace TDFDow30
             // Instantiate and setup the client sockets
             // Establish the remote endpoints for the sockets
             System.Net.IPAddress TRIpAddress = System.Net.IPAddress.Parse(IPAddress);
-            TRClientSocket = new ClientSocket(TRIpAddress, Convert.ToInt32(Port));
+            TDFGlobals.TRClientSocket = new ClientSocket(TRIpAddress, Convert.ToInt32(Port));
 
             // Initialize event handlers for the sockets
-            TRClientSocket.DataReceived += TRDataReceived;
-            TRClientSocket.ConnectionStatusChanged += TRConnectionStatusChanged;
+            TDFGlobals.TRClientSocket.DataReceived += TDFProcessingFunctions.TRDataReceived;
+            TDFGlobals.TRClientSocket.ConnectionStatusChanged += TRConnectionStatusChanged;
 
             // Connect to the TRClientSocket; call-backs for connection status will indicate status of client sockets
-            TRClientSocket.AutoReconnect = true;
-            TRClientSocket.Connect();
+            TDFGlobals.TRClientSocket.AutoReconnect = true;
+            TDFGlobals.TRClientSocket.Connect();
 
             System.Threading.Thread.Sleep(1000);
-            if (TRConnected == true)
+            if (TDFGlobals.TRConnected == true)
             {
                 pictureBox2.Visible = true;
             }
 
             ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
             byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, queryStr, TDFconstants.LOGON_REQUEST, 0);
-            TRSendCommand(outputbuf);
+            TDFConnections.TRSendCommand(outputbuf);
 
             int n = 0;
             while (loggedIn == false && n < 50)
@@ -419,10 +479,8 @@ namespace TDFDow30
                 System.Threading.Thread.Sleep(100);
 
             }
-            TDFProcessingFunctions TDFproc = new TDFProcessingFunctions();
-
-            TDFProcessingFunctions.sendBuf += new SendBuf(TRSendCommand);
-            lblLogResp.Text = logResp;
+            TDFConnections.TRSendCommand(outputbuf);
+            lblLogResp.Text = TDFGlobals.logResp;
             TDFProcessingFunctions.GetCataloger();
             //label7.Text = "Num Catalogs: " + numCat.ToString();
 
@@ -490,18 +548,20 @@ namespace TDFDow30
             timer1.Enabled = true;
             
         }
-    
+        */ 
         public void IssueDynamicSubscriptionQuery(string symbolStr, uint seq)
         {
             string fieldList = "trdPrc, netChg, pcntChg"; 
             //string query = "SELECT " + fieldList + " FROM DYNAMIC_QUOTES WHERE usrSymbol= \"" + symbolStr + "\"";
             string query = $"SELECT {fieldList} FROM DYNAMIC_QUOTES WHERE usrSymbol= {quot}{symbolStr}{quot}";
-            if (TRConnected)
+            if (TDFGlobals.TRConnected)
             {
                 ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
                 byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, query, TDFconstants.DATA_REQUEST, seq);
 
-                TRSendCommand(outputbuf);
+                //TRSendCommand(outputbuf);
+                TDFConnections.TRSendCommand(outputbuf);
+
                 listBox1.Items.Add(query);
 
             }
@@ -509,6 +569,7 @@ namespace TDFDow30
 
         #region Socket Handlers
         // Handler for data received back from TRclientsocket
+        /*
         private void TRDataReceived(ClientSocket sender, byte[] data)
         {
 
@@ -583,9 +644,9 @@ namespace TDFDow30
                         else if (mt == TDFconstants.LOGOFF_RESPONSE)
                         {
                             TRmessage = itfHeaderAccess.ParseItfMessage(TRdata.ToArray());
-                            logResp = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
+                            TDFGlobals.logResp = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
                             messages.Add("Logoff at " + DateTime.Now.ToString());
-                            log.Info(logResp);
+                            log.Info(TDFGlobals.logResp);
                             TRdata.Clear();
                             dataLeft = TRdata.Count;
                             loggedIn = false;
@@ -593,18 +654,18 @@ namespace TDFDow30
                             switch (TRmessage.data_Header.respType)
                             {
                                 case TDFconstants.SUCCCESSFUL_LOGON_LOGOFF:
-                                    log.Info("Logoff " + logResp);
+                                    log.Info("Logoff " + TDFGlobals.logResp);
                                     break;
 
                                 case TDFconstants.ERROR_LOGON_LOGOFF:
-                                    log.Info("Logoff Error " + logResp);
+                                    log.Info("Logoff Error " + TDFGlobals.logResp);
                                     break;
                             }
                         }
                         else if (mt == TDFconstants.LOGON_RESPONSE)
                         {
                             TRmessage = itfHeaderAccess.ParseItfMessage(TRdata.ToArray());
-                            logResp = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
+                            TDFGlobals.logResp = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
                             messages.Add("Logon at " + DateTime.Now.ToString());
                             TRdata.Clear();
                             dataLeft = TRdata.Count;
@@ -615,12 +676,12 @@ namespace TDFDow30
                                     // get and save session ID
                                     stdHeadr.sessionId = TRmessage.itf_Header.sessionId;
                                     log.Info("Logon at " + DateTime.Now.ToString());
-                                    log.Info(logResp);
+                                    log.Info(TDFGlobals.logResp);
                                     loggedIn = true;
                                     break;
 
                                 case TDFconstants.ERROR_LOGON_LOGOFF:
-                                    log.Info("Logon Error " + logResp);
+                                    log.Info("Logon Error " + TDFGlobals.logResp);
                                     loggedIn = false;
                                     break;
                             }
@@ -759,12 +820,12 @@ namespace TDFDow30
                                 log.Error("--- Sync byte not found!");
 
 
-                                /*
-                                TRdata.Clear();
-                                dataLeft = TRdata.Count;
+                                
+                                //TRdata.Clear();
+                                //dataLeft = TRdata.Count;
 
-                                log.Debug("--- Receive buffer cleared!");
-                                */
+                                //log.Debug("--- Receive buffer cleared!");
+                                
 
 
 
@@ -782,20 +843,20 @@ namespace TDFDow30
                                 //TRmessage = itfHeaderAccess.ParseItfMessage(TRdata.ToArray());
                                 //return;
                             }
-                            /*
-                            if (TRmessage.itf_Header.msgType == TDFconstants.KEEP_ALIVE_REQUEST)
-                            {
-                                cmdResp = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
-                                //TDFProcessingFunctions TDFproc = new TDFProcessingFunctions();
-                                TDFproc.ProcessKeepAliveRequest(TRmessage);
-                                int TRdataLen = TRdata.Count;
-                                if (TRmessage.itf_Header.msgSize + 1 > TRdataLen)
-                                    TRdata.RemoveRange(0, TRdataLen);
-                                else
-                                    TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize + 1);
-                                dataLeft = TRdata.Count;
-                            }
-                            */
+                            
+                            //if (TRmessage.itf_Header.msgType == TDFconstants.KEEP_ALIVE_REQUEST)
+                            //{
+                            //    cmdResp = System.Text.Encoding.Default.GetString(TRmessage.Message.ToArray());
+                            //    //TDFProcessingFunctions TDFproc = new TDFProcessingFunctions();
+                            //    TDFproc.ProcessKeepAliveRequest(TRmessage);
+                            //    int TRdataLen = TRdata.Count;
+                            //    if (TRmessage.itf_Header.msgSize + 1 > TRdataLen)
+                            //        TRdata.RemoveRange(0, TRdataLen);
+                            //    else
+                            //        TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize + 1);
+                            //    dataLeft = TRdata.Count;
+                            //}
+                            
                         }
                     }
                     else
@@ -826,7 +887,8 @@ namespace TDFDow30
 
                 ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
                 byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, queryStr, TDFconstants.KEEP_ALIVE_RESPONSE, 0);
-                TRSendCommand(outputbuf);
+                TDFConnections.TRSendCommand(outputbuf);
+                //TRSendCommand(outputbuf);
                 //sendBuf(outputbuf);
             }
             catch (Exception ex)
@@ -1070,11 +1132,11 @@ namespace TDFDow30
             // Set status
             if (status == ClientSocket.ConnectionStatus.Connected)
             {
-                TRConnected = true;
+                TDFGlobals.TRConnected = true;
             }
             else
             {
-                TRConnected = false;
+                TDFGlobals.TRConnected = false;
             }
             if (debugMode)
                 messages.Add("status: " + status.ToString());
@@ -1084,6 +1146,7 @@ namespace TDFDow30
         }
 
         // Send a command to TDF
+        /*
         public void TRSendCommand(byte[] outbuf)
 
         {
@@ -1095,9 +1158,10 @@ namespace TDFDow30
             catch (Exception ex)
             {
                 // Log error
-                log.Error("Error occurred while trying to send data to TR client port: " + ex.Message);
+                log.Error("TRSendCommand - Error occurred while trying to send data to TR client port: " + ex.Message);
             }
         }
+        */
         #endregion;
         
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
@@ -1108,17 +1172,27 @@ namespace TDFDow30
         
         public void GetDow30Data()
         {
-            stopWatch.Start();
-            string fieldList = "trdPrc, netChg, pcntChg";
-            string query = $"SELECT {fieldList} FROM PORTFOLIO_MGR WHERE usrSymbol IN ({symbolListStr})";
-            if (TRConnected)
+            try
             {
-                ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
-                byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, query, TDFconstants.DATA_REQUEST, 5);
+                //stopWatch.Start();
+                string fieldList = "trdPrc, netChg, pcntChg";
+                string query = $"SELECT {fieldList} FROM PORTFOLIO_MGR WHERE usrSymbol IN ({symbolListStr})";
+                if (TDFGlobals.TRConnected)
+                {
+                    ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
+                    byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, query, TDFconstants.DATA_REQUEST, 5);
 
-                TRSendCommand(outputbuf);
-                WatchdogTimer.Enabled = true;
+                    TDFConnections.TRSendCommand(outputbuf);
+                    //TRSendCommand(outputbuf);
+                    WatchdogTimer.Enabled = true;
+                }
             }
+            catch (Exception ex)
+            {
+                // Log error
+                log.Error("GetDow30Data - Error occurred getting the DOW30 data from TDF: " + ex.Message);
+            }
+
         }
 
         public void GetYesterdaysClose()
@@ -1130,12 +1204,13 @@ namespace TDFDow30
             timer1.Enabled = false;
             Thread.Sleep(50);
             string query = "SELECT ycls FROM PORTFOLIO_MGR WHERE usrSymbol IN (.DJIA,.NCOMP,.SPX)";
-            if (TRConnected)
+            if (TDFGlobals.TRConnected)
             {
                 ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
                 byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, query, TDFconstants.DATA_REQUEST, 5);
 
-                TRSendCommand(outputbuf);
+                TDFConnections.TRSendCommand(outputbuf);
+                //TRSendCommand(outputbuf);
                 //WatchdogTimer.Enabled = true;
             }
             Thread.Sleep(50);
@@ -1192,6 +1267,7 @@ namespace TDFDow30
 
             if (TDFGlobals.financialResults.Count > 0)
             {
+                WatchdogTimer.Enabled = false;
                 for (int i = 0; i < TDFGlobals.financialResults.Count; i++)
                 {
 
@@ -1323,44 +1399,51 @@ namespace TDFDow30
 
         public void UpdateAllSymbols(bool ycls)
         {
-            int nZeros = 0;
-            for (int i = 0; i < TDFGlobals.symbols.Count; i++)
+            try
             {
-                symbolData sd = new symbolData();
-                sd = TDFGlobals.symbols[i];
-                if (marketIsOpen == false && sd.netChg == 0.0 && dataReset == false)
-                    nZeros++;
-
-                if (Dow30Data[i].Change != sd.netChg && sd.trdPrc != 0)
-                    UpdateDB(sd);
-                if (ycls)
+                int nZeros = 0;
+                for (int i = 0; i < TDFGlobals.symbols.Count; i++)
                 {
-                    if (sd.symbol == ".DJIA")
-                        dowValue = sd.ycls;
-                    if (sd.symbol == ".NCOMP")
-                        nasdaqValue = sd.ycls;
-                    if (sd.symbol == ".SPX")
-                        spxValue = sd.ycls;
+                    symbolData sd = new symbolData();
+                    sd = TDFGlobals.symbols[i];
+                    if (marketIsOpen == false && sd.netChg == 0.0 && dataReset == false)
+                        nZeros++;
 
+                    if (Dow30Data.Count > 0 && Dow30Data[i].Change != sd.netChg && sd.trdPrc != 0)
+                        UpdateDB(sd);
+
+                    if (ycls)
+                    {
+                        if (sd.symbol == ".DJIA")
+                            dowValue = sd.ycls;
+                        if (sd.symbol == ".NCOMP")
+                            nasdaqValue = sd.ycls;
+                        if (sd.symbol == ".SPX")
+                            spxValue = sd.ycls;
+
+                    }
+                    else
+                    {
+                        if (sd.symbol == ".DJIA")
+                            dowValue = sd.trdPrc;
+                        if (sd.symbol == ".NCOMP")
+                            nasdaqValue = sd.trdPrc;
+                        if (sd.symbol == ".SPX")
+                            spxValue = sd.trdPrc;
+
+                    }
                 }
-                else
+                if (nZeros > TDFGlobals.symbols.Count - 6 && dataReset == false)
                 {
-                    if (sd.symbol == ".DJIA")
-                        dowValue = sd.trdPrc;
-                    if (sd.symbol == ".NCOMP")
-                        nasdaqValue = sd.trdPrc;
-                    if (sd.symbol == ".SPX")
-                        spxValue = sd.trdPrc;
-
+                    log.Debug($"Data reset at: {DateTime.Now}");
+                    DataResetLabel.Text = $"Data reset at: {DateTime.Now}";
+                    dataReset = true;
                 }
             }
-            if (nZeros > TDFGlobals.symbols.Count - 6 && dataReset == false)
+            catch (Exception ex)
             {
-                log.Debug($"Data reset at: {DateTime.Now}");
-                DataResetLabel.Text = $"Data reset at: {DateTime.Now}";
-                dataReset = true;
+                log.Error($"UpdateAllSymbols - Error: {ex}");
             }
-
         }
 
 
@@ -1413,8 +1496,7 @@ namespace TDFDow30
                                 catch (Exception ex)
                                 {
                                     transaction.Rollback();
-                                    log.Error("UpdateData- SQL Command Exception occurred: " + ex.Message);
-                                    log.Debug("UpdateData- SQL Command Exception occurred", ex);
+                                    log.Error($"UpdateDB- SQL Command Exception occurred: {ex}");
                                 }
                         }
                     }
@@ -1423,7 +1505,7 @@ namespace TDFDow30
             }
             catch (Exception ex)
             {
-                log.Error("UpdateData- SQL Connection Exception occurred: " + ex.Message);
+                log.Error("UpdateDB- SQL Connection Exception occurred: " + ex.Message);
                 
             }
             
@@ -1527,7 +1609,7 @@ namespace TDFDow30
             //"No need to worry, no Fatal Exception Errors, no Warnings, just running smooooooth." + Environment.NewLine +
             //"Almost could be a Corona commercial.";
             mail.Body = msg;
-            mailClient.Send(mail);
+            //mailClient.Send(mail);
         }
 
         
@@ -1535,9 +1617,10 @@ namespace TDFDow30
         {
             if (dynamic)
                 UnsubscribeAll();
-            Logoff();
+            TDFConnections.Logoff();
             log.Debug("*****  TDFDow30 Closed *****");
         }
+        /*
         private void Logoff()
         {
             // Build Logon Message
@@ -1545,27 +1628,28 @@ namespace TDFDow30
 
             ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
             byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, queryStr, TDFconstants.LOGOFF_REQUEST, 0);
-            TRSendCommand(outputbuf);
+            TDFConnections.TRSendCommand(outputbuf);
+            //TRSendCommand(outputbuf);
         }
         public void DisconnectFromTDF()
         {
             Logoff();
             Thread.Sleep(1000);
-            TRClientSocket.Disconnect();
+            TDFGlobals.TRClientSocket.Disconnect();
             Thread.Sleep(1000);
             
         }
-
+        */
         private void TODTimer_Tick(object sender, EventArgs e)
         {
             timeOfDayLabel.Text = DateTime.Now.ToString("MMM d, yyyy -- h:mm:ss tt");
 
-            if (TRConnected)
+            if (TDFGlobals.TRConnected)
                 pictureBox2.Visible = true;
             else
                 pictureBox2.Visible = false;
 
-            lblLogResp.Text = logResp;
+            lblLogResp.Text = TDFGlobals.logResp;
 
             for (int i = 0; i < messages.Count; i++)
             {
@@ -1690,13 +1774,15 @@ namespace TDFDow30
             if (dynamic)
                 UnsubscribeAll();
 
-            DisconnectFromTDF();
+            TDFConnections.DisconnectFromTDF();
             Thread.Sleep(1000);
             TDFGlobals.symbols.Clear();
             TDFGlobals.financialResults.Clear();
-            ConnectToTDF();
+            //ConnectToTDF();
+            TDFConnections.ConnectToTDF(TDFGlobals.ServerID);
+
             resetting = false;
-            if (TRConnected == true)
+            if (TDFGlobals.TRConnected == true)
             {
                 resetComplete = true;
                 if (resetTime)
@@ -1725,7 +1811,8 @@ namespace TDFDow30
                 string queryStr = $"DELETE FROM SUBSCRIPTION_TABLE WHERE channelName = DYNAMIC_QUOTES AND usrSymbol = {quot}{sym}{quot}";
                 ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
                 byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, queryStr, TDFconstants.DATA_REQUEST, 1);
-                TRSendCommand(outputbuf);
+                TDFConnections.TRSendCommand(outputbuf);
+                //TRSendCommand(outputbuf);
                 listBox1.Items.Add(queryStr);
                 Thread.Sleep(50);
                 
@@ -1862,7 +1949,7 @@ namespace TDFDow30
                 string msg = "[" + DateTime.Now + "] TDFDow30 response error. Data requested with no response.";
                 SendEmail(msg);
                 timerEmailSent = DateTime.Now;
-                DisconnectFromTDF();
+                TDFConnections.DisconnectFromTDF();
                 ResetTimer.Enabled = true;
                 timer1.Enabled = false;
             }
@@ -1874,7 +1961,8 @@ namespace TDFDow30
         {
             ResetTimer.Enabled = false;
             log.Debug("Reset Timer fired.");
-            ResetTDFConnection(false);
+            //ResetTDFConnection(false);
+            TDFConnections.ServerReset(false);
         }
 
         public bool MarketOpenStatus()

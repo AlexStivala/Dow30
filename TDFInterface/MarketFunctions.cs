@@ -680,6 +680,7 @@ namespace TDFInterface
 
                         if (TDFGlobals.financialResults.Count > 0)
                             TDFProcessingFunctions.SetSymbolData(TDFGlobals.financialResults, i, symbolIndex);
+
                     }
                     TDFGlobals.financialResults.Clear();
                     done = true;

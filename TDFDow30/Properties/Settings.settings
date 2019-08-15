@@ -37,13 +37,13 @@
       <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="spUpdate" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">sp_UpdateSymbolData</Value>
+      <Value Profile="(Default)">sp_UpdateSymbolDataDev</Value>
     </Setting>
     <Setting Name="updateZipperFile" Type="System.Boolean" Scope="Application">
-      <Value Profile="(Default)">True</Value>
+      <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="updateChartData" Type="System.Boolean" Scope="Application">
-      <Value Profile="(Default)">True</Value>
+      <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="chartTableName" Type="System.String" Scope="Application">
       <Value Profile="(Default)">X20ChartData</Value>

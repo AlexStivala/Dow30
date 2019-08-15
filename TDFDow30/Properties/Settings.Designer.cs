@@ -117,7 +117,7 @@ namespace TDFDow30.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("sp_UpdateSymbolData")]
+        [global::System.Configuration.DefaultSettingValueAttribute("sp_UpdateSymbolDataDev")]
         public string spUpdate {
             get {
                 return ((string)(this["spUpdate"]));
@@ -126,7 +126,7 @@ namespace TDFDow30.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool updateZipperFile {
             get {
                 return ((bool)(this["updateZipperFile"]));
@@ -135,7 +135,7 @@ namespace TDFDow30.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool updateChartData {
             get {
                 return ((bool)(this["updateChartData"]));

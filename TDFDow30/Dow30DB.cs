@@ -123,8 +123,7 @@ namespace Dow30Database
             catch (Exception ex)
             {
                 // Log error
-                log.Error($"GetDBData Exception occurred: {ex}");
-                //log.Debug("GetDBData Exception occurred", ex);
+                log.Error($"SQLExec Exception occurred: {ex}");
                 numRowsAffected = -1;
 
             }
