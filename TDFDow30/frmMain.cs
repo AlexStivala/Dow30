@@ -1259,75 +1259,83 @@ namespace TDFDow30
             string sym = "";
             string oldSym = "";
 
-            if (dynamic == false)
+            try
             {
-                GetDow30Data();
-                Thread.Sleep(50);
-            }
 
-            if (TDFGlobals.financialResults.Count > 0)
-            {
-                WatchdogTimer.Enabled = false;
-                for (int i = 0; i < TDFGlobals.financialResults.Count; i++)
+                if (dynamic == false && TDFGlobals.TRConnected)
                 {
+                    GetDow30Data();
+                    Thread.Sleep(50);
+                }
 
-                    int symbolIndex = TDFProcessingFunctions.GetSymbolIndx(TDFGlobals.financialResults[i].symbol);
-                    sym = TDFGlobals.financialResults[i].symbol;
-                    if (sym != oldSym && sym != null)
+                if (TDFGlobals.financialResults.Count > 0)
+                {
+                    WatchdogTimer.Enabled = false;
+                    for (int i = 0; i < TDFGlobals.financialResults.Count; i++)
                     {
-                        s = TDFGlobals.financialResults[i].symbolFull;
 
-                        if (debugMode)
+                        int symbolIndex = TDFProcessingFunctions.GetSymbolIndx(TDFGlobals.financialResults[i].symbol);
+                        sym = TDFGlobals.financialResults[i].symbol;
+                        if (sym != oldSym && sym != null)
                         {
-                            if (i == 0)
-                                listBox1.Items.Add("----------");
-                            if (dynamic == false)
-                                listBox1.Items.Add(" ");
-                            listBox1.Items.Add(s);
+                            s = TDFGlobals.financialResults[i].symbolFull;
 
+                            if (debugMode)
+                            {
+                                if (i == 0)
+                                    listBox1.Items.Add("----------");
+                                if (dynamic == false)
+                                    listBox1.Items.Add(" ");
+                                listBox1.Items.Add(s);
+
+                            }
+
+                            oldSym = sym;
                         }
 
-                        oldSym = sym;
+                        if (dynamic == false && debugMode == true)
+                            DisplayResults(TDFGlobals.financialResults, i);
+
+                        if (TDFGlobals.financialResults.Count > 0)
+                            TDFProcessingFunctions.SetSymbolData(TDFGlobals.financialResults, i, symbolIndex);
+
                     }
+                    TDFGlobals.financialResults.Clear();
 
-                    if (dynamic == false && debugMode == true)
-                        DisplayResults(TDFGlobals.financialResults, i);
+                    UpdateAllSymbols(false);
 
-                    if (TDFGlobals.financialResults.Count > 0)
-                        TDFProcessingFunctions.SetSymbolData(TDFGlobals.financialResults, i, symbolIndex);
+                    string connection = $"SELECT * FROM {dbTableName}";
+                    Dow30Data = Dow30Database.Dow30DB.GetSymbolDataCollection(connection, dbConn);
+                    symbolDataGrid.DataSource = Dow30Data;
+                    symbolDataGrid.ClearSelection();
 
+                    foreach (DataGridViewRow row in symbolDataGrid.Rows)
+                    {
+                        if (Convert.ToSingle(row.Cells[5].Value) < 0)
+                        {
+                            row.DefaultCellStyle.BackColor = Color.Red;
+                            row.DefaultCellStyle.ForeColor = Color.Black;
+                        }
+                        else if (Convert.ToSingle(row.Cells[5].Value) > 0)
+                        {
+                            row.DefaultCellStyle.BackColor = Color.Green;
+                            row.DefaultCellStyle.ForeColor = Color.White;
+                        }
+                        else
+                        {
+                            row.DefaultCellStyle.BackColor = Color.White;
+                            row.DefaultCellStyle.ForeColor = Color.Black;
+                        }
+
+                    }
+                    if (updateZipperFile)
+                        UpdateZipperDataFile();
+                    //label1.Text = $"Elapsed: {ts.TotalMilliseconds.ToString()} msec";
                 }
-                TDFGlobals.financialResults.Clear();
-
-                UpdateAllSymbols(false);
-
-                string connection = $"SELECT * FROM {dbTableName}";
-                Dow30Data = Dow30Database.Dow30DB.GetSymbolDataCollection(connection, dbConn);
-                symbolDataGrid.DataSource = Dow30Data;
-                symbolDataGrid.ClearSelection();
-
-                foreach (DataGridViewRow row in symbolDataGrid.Rows)
-                {
-                    if (Convert.ToSingle(row.Cells[5].Value) < 0)
-                    {
-                        row.DefaultCellStyle.BackColor = Color.Red;
-                        row.DefaultCellStyle.ForeColor = Color.Black;
-                    }
-                    else if (Convert.ToSingle(row.Cells[5].Value) > 0)
-                    {
-                        row.DefaultCellStyle.BackColor = Color.Green;
-                        row.DefaultCellStyle.ForeColor = Color.White;
-                    }
-                    else
-                    {
-                        row.DefaultCellStyle.BackColor = Color.White;
-                        row.DefaultCellStyle.ForeColor = Color.Black;
-                    }
-
-                }
-                if (updateZipperFile)
-                    UpdateZipperDataFile();
-                //label1.Text = $"Elapsed: {ts.TotalMilliseconds.ToString()} msec";
+            }
+            catch (Exception ex)
+            {
+                log.Error($"Timer1 Error - {ex}");
             }
         }
 
@@ -1609,7 +1617,7 @@ namespace TDFDow30
             //"No need to worry, no Fatal Exception Errors, no Warnings, just running smooooooth." + Environment.NewLine +
             //"Almost could be a Corona commercial.";
             mail.Body = msg;
-            //mailClient.Send(mail);
+            mailClient.Send(mail);
         }
 
         
@@ -1723,6 +1731,7 @@ namespace TDFDow30
             // if server is scheduled for reset - Get next time for both resets
             if (DateTime.Now > TDFConnections.nextServerReset)
             {
+                timer1.Enabled = false;
                 WatchdogTimer.Enabled = false;
                 MarketModel.ServerReset sr = MarketFunctions.GetServerResetSched(TDFGlobals.ServerID);
                 TDFConnections.nextServerReset = TDFConnections.GetNextServerResetTime(sr);
@@ -1731,15 +1740,21 @@ namespace TDFDow30
                 DailyResetLabel.Text = $"Next Daily Reset: {TDFConnections.nextDailyReset}";
 
                 TDFConnections.ServerReset(true);
+                timer1.Enabled = true;
+
             }
 
             if (DateTime.Now > TDFConnections.nextDailyReset)
             {
+                timer1.Enabled = false;
+                WatchdogTimer.Enabled = false;
                 MarketModel.ServerReset sr = MarketFunctions.GetServerResetSched(TDFGlobals.ServerID);
                 TDFConnections.nextDailyReset = TDFConnections.GetNextDailyResetTime(sr);
                 DailyResetLabel.Text = $"Next Daily Reset: {TDFConnections.nextDailyReset}";
 
                 TDFConnections.ServerReset(false);
+                timer1.Enabled = true;
+
             }
 
 
@@ -1945,13 +1960,13 @@ namespace TDFDow30
         {
             if (timerFlag == false)
             {
+                timer1.Enabled = false;
                 timerFlag = true;
                 string msg = "[" + DateTime.Now + "] TDFDow30 response error. Data requested with no response.";
                 SendEmail(msg);
                 timerEmailSent = DateTime.Now;
                 TDFConnections.DisconnectFromTDF();
                 ResetTimer.Enabled = true;
-                timer1.Enabled = false;
             }
             log.Debug("TDFDow30 response error. Data requested with no response.");
 
@@ -1963,6 +1978,7 @@ namespace TDFDow30
             log.Debug("Reset Timer fired.");
             //ResetTDFConnection(false);
             TDFConnections.ServerReset(false);
+            timer1.Enabled = true;
         }
 
         public bool MarketOpenStatus()
