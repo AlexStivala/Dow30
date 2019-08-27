@@ -81,7 +81,7 @@ namespace TDFDow30.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("X20FinancialData")]
+        [global::System.Configuration.DefaultSettingValueAttribute("X20FinancialDataDev")]
         public string dbTableName {
             get {
                 return ((string)(this["dbTableName"]));
@@ -144,7 +144,7 @@ namespace TDFDow30.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("X20ChartData")]
+        [global::System.Configuration.DefaultSettingValueAttribute("X20ChartDataDev")]
         public string chartTableName {
             get {
                 return ((string)(this["chartTableName"]));
@@ -153,7 +153,7 @@ namespace TDFDow30.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("sp_Insert_ChartData")]
+        [global::System.Configuration.DefaultSettingValueAttribute("sp_Insert_ChartDataDev")]
         public string spUpdateChart {
             get {
                 return ((string)(this["spUpdateChart"]));

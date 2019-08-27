@@ -105,8 +105,6 @@ namespace TDFInterface
     public class TDFGlobals
     {
         public static List<symbolData> symbols = new List<symbolData>();
-        //public static List<symbolData> brokerSymbols = new List<symbolData>();
-        public static List<MarketModel.DataRequests> dataRequests = new List<MarketModel.DataRequests>();
         public static List<byte> TRdata = new List<byte>();
         public static int dataLeft;
         public static bool loggedIn = false;
@@ -119,7 +117,6 @@ namespace TDFInterface
         public static bool dynamic = false;
 
         
-        public static List<symbolData> LiveUpdates = new List<symbolData>();
         public static field_Info[] field_Info_Table = new field_Info[0x10000];
         public static List<string> starredFields = new List<string>();
         public static List<fin_Data> financialResults = new List<fin_Data>();

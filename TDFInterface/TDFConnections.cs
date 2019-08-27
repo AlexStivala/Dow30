@@ -41,6 +41,11 @@ namespace TDFInterface
         #endregion
 
 
+        public TDFConnections()
+        {
+            ReconnectTimer.Elapsed += new ElapsedEventHandler(ReconnectTimer_Tick);
+        }
+
 
         public static void ConnectToTDF(int serverId)
         {
@@ -51,20 +56,13 @@ namespace TDFInterface
             try
             {
                 ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
-
-                //TDFProcessingFunctions TDFproc = new TDFProcessingFunctions();
-                //TDFproc.sendBuf += new SendBuf(TRSendCommand);
-                //TDFProcessingFunctions TDFproc = new TDFProcessingFunctions();
                 TDFProcessingFunctions.sendBuf += new SendBuf(TRSendCommand);
-
-                // TDFQueryFunctions.sendBuf += new SendBuf(TRSendCommand);
 
                 MarketModel.ServerReset sr = MarketFunctions.GetServerResetSched(serverId);
 
                 // Instantiate and setup the client sockets
                 // Establish the remote endpoints for the sockets
                 System.Net.IPAddress TRIpAddress = System.Net.IPAddress.Parse(sr.IPAddress);
-                //AsyncClientSocket.ClientSocket TRClientSocket = new AsyncClientSocket.ClientSocket(TRIpAddress, Convert.ToInt32(sr.Port));
                 TDFGlobals.TRClientSocket = new AsyncClientSocket.ClientSocket(TRIpAddress, Convert.ToInt32(sr.Port));
 
                 // Initialize event handlers for the sockets
@@ -90,7 +88,6 @@ namespace TDFInterface
                             done = true;
                             string queryStr = $"LOGON USERNAME={quot}{sr.UserId}{quot} PASSWORD={quot}{sr.PW}{quot}";
                             byte[] outputbuf = itfHeaderAccess.Build_Outbuf(TDFProcessingFunctions.stdHeadr, queryStr, TDFconstants.LOGON_REQUEST, 0);
-                            //TDFProcessingFunctions.sendBuf(outputbuf);
                             TRSendCommand(outputbuf);
                         }
                         n++;
@@ -103,8 +100,6 @@ namespace TDFInterface
                         log.Error("Error: Did not connect.");
                     }
                 }
-
-
 
                 n = 0;
                 done = false;
@@ -130,9 +125,7 @@ namespace TDFInterface
                         log.Error("Error: Not logged on.");
 
                     }
-
                 }
-
 
                 //lblLogResp.Text = logResp;
                 
@@ -152,12 +145,8 @@ namespace TDFInterface
                 }
                 log.Info($"Num Fields: {cnt}");
 
-
                 ReconnectTimer.Interval = 120000;
-                ReconnectTimer.Elapsed += new ElapsedEventHandler(ReconnectTimer_Tick);
                 ReconnectTimer.Enabled = false;
-
-
             }
             catch (Exception ex)
             {
@@ -179,21 +168,19 @@ namespace TDFInterface
             {
                 TDFGlobals.TRConnected = false;
             }
-            //if (debugMode)
-            //messages.Add("status: " + status.ToString());
-
+            
             log.Info("TR Connection Status: " + status.ToString());
         }
 
         public static void TRDataReceived(AsyncClientSocket.ClientSocket sender, byte[] data)
         {
-            TDFProcessingFunctions TDFproc = new TDFProcessingFunctions();
-            TDFproc.TDFDataReceived(sender, data);
+            //TDFProcessingFunctions TDFproc = new TDFProcessingFunctions();
+            //TDFproc.TDFDataReceived(sender, data);
+            TDFProcessingFunctions.TDFDataReceived(sender, data);
         }
 
         // Send a command to TDF
         public static void TRSendCommand(byte[] outbuf)
-
         {
             try
             {
@@ -215,8 +202,6 @@ namespace TDFInterface
 
             ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
             byte[] outputbuf = itfHeaderAccess.Build_Outbuf(TDFProcessingFunctions.stdHeadr, queryStr, TDFconstants.LOGOFF_REQUEST, 0);
-            //TDFProcessingFunctions.sendBuf(outputbuf);
-
             TRSendCommand(outputbuf);
         }
         
@@ -227,10 +212,8 @@ namespace TDFInterface
             TDFGlobals.TRClientSocket.Disconnect();
             TDFGlobals.TRConnected = false;
             //pictureBox2.Visible = false;
-            Thread.Sleep(200);
-
+            Thread.Sleep(1000);
         }
-
 
         public static void ServerReset(bool isServerReset)
         {
@@ -256,9 +239,13 @@ namespace TDFInterface
                 TDFProc.UnsubscribeAll();
                 log.Debug("Unsubscribe complete.");
             }
+
             DisconnectFromTDF();
+
             TDFGlobals.symbols.Clear();
             TDFGlobals.financialResults.Clear();
+            TDFGlobals.TRdata.Clear();
+            TDFGlobals.dataLeft = 0;
 
             ReconnectTimer.Interval = 60000 * resetMinutes;
             ReconnectTimer.Enabled = true;
@@ -269,18 +256,24 @@ namespace TDFInterface
         private static void ReconnectTimer_Tick(object sender, EventArgs e)
         {
             ReconnectTimer.Enabled = false;
-            ConnectToTDF(TDFGlobals.ServerID);
-            Thread.Sleep(2000);
-            if (TDFGlobals.TRConnected == true)
+            log.Debug("ReconnectTimer fired. ");
+            if (!TDFGlobals.TRConnected)
             {
-                log.Debug("Reset complete");
+                ConnectToTDF(TDFGlobals.ServerID);
+                Thread.Sleep(2000);
+                if (TDFGlobals.TRConnected == true)
+                {
+                    log.Debug("Reset complete");
+                }
+                else
+                {
+                    string msg = $"[{DateTime.Now}] {System.Reflection.Assembly.GetEntryAssembly().GetName()} reset error. Failed to reconnect after timed disconnect.";
+                    //SendEmail(msg);
+                    log.Debug($"{System.Reflection.Assembly.GetEntryAssembly().GetName()} reset error. Failed to reconnect after timed disconnect.");
+                }
             }
             else
-            {
-                string msg = $"[{DateTime.Now}] {System.Reflection.Assembly.GetEntryAssembly().GetName()} reset error. Failed to reconnect after timed disconnect.";
-                //SendEmail(msg);
-                log.Debug($"{System.Reflection.Assembly.GetEntryAssembly().GetName()} reset error. Failed to reconnect after timed disconnect.");
-            }
+                log.Debug(">>>>>>>>>>>>>>>>>>>>>> ReconnectTimer error: Already connected. ");
         }
 
         public static DateTime GetNextServerResetTime(MarketModel.ServerReset sr)

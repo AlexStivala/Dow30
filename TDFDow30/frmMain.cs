@@ -114,7 +114,7 @@ namespace TDFDow30
         public bool updateZipperFile = false;
         public bool updateChartData = false;
         public string spUpdateChart = "";
-
+        
         public byte mt = 0;
         public ushort msgSize = 0;
         public int dataLeft = 0;
@@ -263,13 +263,6 @@ namespace TDFDow30
                 updateChartData = Properties.Settings.Default.updateChartData;
                 TDFGlobals.ServerID = Properties.Settings.Default.TDFServer_ID;
 
-
-                //disconnectTime = DateTime.Today + Properties.Settings.Default.Reset_Connection;
-                //if (DateTime.Now > disconnectTime)
-                //    disconnectTime = disconnectTime.AddDays(1);
-                //refTime = DateTime.Today.AddHours(1);
-
-
                 MarketModel.ServerReset sr = MarketFunctions.GetServerResetSched(TDFGlobals.ServerID);
                 IPAddress = sr.IPAddress;
                 UserName = sr.UserId;
@@ -284,64 +277,11 @@ namespace TDFDow30
 
                 TDFGlobals.showAllFields = false;
 
-
-                /*
-                for (int i = 0; i < 150; i++)
-                {
-                    for (int j = 0; j < 60; j++)
-                    {
-                        CatalogData[i, j] = 0;
-                    }
-                }
-                */
-
                 TDFProcessingFunctions.InitializeSymbolFields();
                 ServerResetLabel.Text = $"Next Server Reset: {TDFConnections.nextServerReset}";
                 DailyResetLabel.Text = $"Next Daily Reset: {TDFConnections.nextDailyReset}";
 
-                // fields requested in hotboards
-                /*
-                TDFGlobals.starredFields.Add("trdPrc"); // 0
-                TDFGlobals.starredFields.Add("netChg"); // 1
-                TDFGlobals.starredFields.Add("ycls"); //2
-                TDFGlobals.starredFields.Add("pcntChg"); //3
-                */
-                /*
-                TDFGlobals.starredFields.Add("hi"); // 4
-                TDFGlobals.starredFields.Add("lo"); // 5
-                TDFGlobals.starredFields.Add("annHi"); // 6
-                TDFGlobals.starredFields.Add("annLo");// 7
-                TDFGlobals.starredFields.Add("cumVol"); // 8
-                TDFGlobals.starredFields.Add("peRatio"); // 9
-                TDFGlobals.starredFields.Add("eps"); // 10
-                TDFGlobals.starredFields.Add("ask"); // 11
-                TDFGlobals.starredFields.Add("bid"); // 12
-                TDFGlobals.starredFields.Add("lastActivity"); // 13
-                TDFGlobals.starredFields.Add("lastActivityNetChg"); // 14
-                TDFGlobals.starredFields.Add("lastActivityPcntChg"); // 15
-                TDFGlobals.starredFields.Add("divAnn"); // 16
-                TDFGlobals.starredFields.Add("intRate"); // 17
-                TDFGlobals.starredFields.Add("bidYld"); // 18
-                TDFGlobals.starredFields.Add("bidNetChg"); // 19
-                TDFGlobals.starredFields.Add("askYld"); // 20
-                TDFGlobals.starredFields.Add("bidYldNetChg"); // 21
-                TDFGlobals.starredFields.Add("yrClsPrc"); // 22
-                TDFGlobals.starredFields.Add("monthClsPrc"); //23
-                TDFGlobals.starredFields.Add("mktCap"); //24
-                TDFGlobals.starredFields.Add("opn"); // 25
-                TDFGlobals.starredFields.Add("yld"); // 26
-                TDFGlobals.starredFields.Add("prcFmtCode"); // 27
-                TDFGlobals.starredFields.Add("companyShrsOutstanding"); // 28
-                TDFGlobals.starredFields.Add("sectyType"); // 29
-                TDFGlobals.starredFields.Add("symbol"); // 30
-                */
-
-
-                //XMLDataUpdated += new EventHandler<XMLUpdateEventArgs>(DisplayXMLData);
-                //SymbolDataUpdated += new EventHandler<SymbolUpdateEventArgs>(SymbolDataUpdated);
-                //ChartDataUpdated += new EventHandler<ChartLiveUpdateEventArgs>(ChartDataUpdated);
-                //ChartClosed += new EventHandler<ChartClosedEventArgs>(ChartClosed);
-
+                
                 string cmd = $"SELECT * FROM MarketHolidays";
                 marketHolidays = Dow30Database.Dow30DB.GetHolidays(cmd, dbConn);
 
@@ -356,11 +296,20 @@ namespace TDFDow30
                 // Log application start
                 log.Debug($"\r\n\r\n*********** Starting TDFDow30 v{version} **********\r\n");
 
+                chartCnt = (Int16)(chartInterval - 3);
+                TDFConnections.ConnectToTDF(TDFGlobals.ServerID);
+                if (TDFGlobals.TRConnected == true)
+                {
+                    pictureBox2.Visible = true;
+                }
+                lblLogResp.Text = TDFGlobals.logResp;
 
-                //TDFProcessingFunctions.sendBuf += new SendBuf(TRSendCommand);
+                InitializeDow30Data();
                 TODTimer.Enabled = true;
+                //ResetTimer.Enabled = true;
 
-                
+                //TDFConnections.nextDailyReset = DateTime.Now.AddMinutes(5);
+
             }
             catch (Exception ex)
             {
@@ -368,17 +317,7 @@ namespace TDFDow30
                 log.Error("frmMain Exception occurred during main form load: " + ex.Message);
                 //log.Debug("frmMain Exception occurred during main form load", ex);
             }
-            chartCnt = (Int16)(chartInterval - 3);
-            TDFConnections.ConnectToTDF(TDFGlobals.ServerID);
-            if (TDFGlobals.TRConnected == true)
-            {
-                pictureBox2.Visible = true;
-            }
-            lblLogResp.Text = TDFGlobals.logResp;
-
-            InitializeDow30Data();
-            TODTimer.Enabled = true;
-            //ResetTimer.Enabled = true;
+            
         }
 
         public void InitializeDow30Data()
@@ -388,12 +327,14 @@ namespace TDFDow30
             Dow30Data = Dow30Database.Dow30DB.GetSymbolDataCollection(connection, dbConn);
             symbolDataGrid.DataSource = Dow30Data;
 
+            log.Debug("Initializing symbols...");
             System.Threading.Thread.Sleep(1000);
 
             // create symbol list and set up symbols collection
             bool first = true;
             symbolListStr = "";
             uint ui = 0;
+            TDFGlobals.Dow30symbols.Clear();
             foreach (Dow30Database.Dow30DB.Dow30symbolData sd in Dow30Data)
             {
                 TDFGlobals.Dow30symbols.Add(sd.SubscribeSymbol);
@@ -429,6 +370,9 @@ namespace TDFDow30
             //label1.Text = symbolListStr;
 
             // start data collection
+            log.Debug("Symbols initialized...");
+            Thread.Sleep(200);
+
             timer1.Enabled = true;
 
         }
@@ -1184,7 +1128,7 @@ namespace TDFDow30
 
                     TDFConnections.TRSendCommand(outputbuf);
                     //TRSendCommand(outputbuf);
-                    WatchdogTimer.Enabled = true;
+                    //WatchdogTimer.Enabled = true;
                 }
             }
             catch (Exception ex)
@@ -1262,7 +1206,7 @@ namespace TDFDow30
             try
             {
 
-                if (dynamic == false && TDFGlobals.TRConnected)
+                if (dynamic == false && TDFGlobals.TRConnected && !resetting)
                 {
                     GetDow30Data();
                     Thread.Sleep(50);
@@ -1628,26 +1572,7 @@ namespace TDFDow30
             TDFConnections.Logoff();
             log.Debug("*****  TDFDow30 Closed *****");
         }
-        /*
-        private void Logoff()
-        {
-            // Build Logon Message
-            string queryStr = "LOGOFF";
-
-            ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
-            byte[] outputbuf = itfHeaderAccess.Build_Outbuf(stdHeadr, queryStr, TDFconstants.LOGOFF_REQUEST, 0);
-            TDFConnections.TRSendCommand(outputbuf);
-            //TRSendCommand(outputbuf);
-        }
-        public void DisconnectFromTDF()
-        {
-            Logoff();
-            Thread.Sleep(1000);
-            TDFGlobals.TRClientSocket.Disconnect();
-            Thread.Sleep(1000);
-            
-        }
-        */
+        
         private void TODTimer_Tick(object sender, EventArgs e)
         {
             timeOfDayLabel.Text = DateTime.Now.ToString("MMM d, yyyy -- h:mm:ss tt");
@@ -1729,95 +1654,53 @@ namespace TDFDow30
                 timerFlag = false;
 
             // if server is scheduled for reset - Get next time for both resets
-            if (DateTime.Now > TDFConnections.nextServerReset)
+            if (DateTime.Now > TDFConnections.nextServerReset && !resetting)
             {
+                resetting = true;
                 timer1.Enabled = false;
                 WatchdogTimer.Enabled = false;
+
                 MarketModel.ServerReset sr = MarketFunctions.GetServerResetSched(TDFGlobals.ServerID);
                 TDFConnections.nextServerReset = TDFConnections.GetNextServerResetTime(sr);
                 TDFConnections.nextDailyReset = TDFConnections.GetNextDailyResetTime(sr);
                 ServerResetLabel.Text = $"Next Server Reset: {TDFConnections.nextServerReset}";
                 DailyResetLabel.Text = $"Next Daily Reset: {TDFConnections.nextDailyReset}";
 
+                Thread.Sleep(200);
+
                 TDFConnections.ServerReset(true);
+                InitializeDow30Data();
                 timer1.Enabled = true;
+                resetting = false;
 
             }
 
-            if (DateTime.Now > TDFConnections.nextDailyReset)
+            if (DateTime.Now > TDFConnections.nextDailyReset && !resetting)
             {
-                timer1.Enabled = false;
+                resetting = true;
                 WatchdogTimer.Enabled = false;
+                
                 MarketModel.ServerReset sr = MarketFunctions.GetServerResetSched(TDFGlobals.ServerID);
                 TDFConnections.nextDailyReset = TDFConnections.GetNextDailyResetTime(sr);
                 DailyResetLabel.Text = $"Next Daily Reset: {TDFConnections.nextDailyReset}";
 
+                Thread.Sleep(200);
+                
                 TDFConnections.ServerReset(false);
+                timer1.Enabled = false;
+                InitializeDow30Data();
                 timer1.Enabled = true;
+                resetting = false;
+                //TDFConnections.nextDailyReset = DateTime.Now.AddMinutes(5);
 
             }
-
-
-            /*
-            if (resetFlag == true && DateTime.Now > refTime)
-                resetFlag = false;
-
-
-            if (resetComplete == true && DateTime.Now > refTime)
-                resetComplete = false;
-
-
-            if (resetComplete == false && resetting == false && DateTime.Now > disconnectTime)
-            {
-                ResetTDFConnection(true);
-                log.Debug("TOD timer reset.");
-
-            }
-            */
 
             if (zipperFlag == true && DateTime.Now > zipperEmailSent.AddDays(1))
                 zipperFlag = false;
 
-
         }
 
-        public void ResetTDFConnection(bool resetTime)
-        {
-            log.Debug("Resetting TDF Connection");
-            resetting = true;
-            timer1.Enabled = false;
-            if (dynamic)
-                UnsubscribeAll();
-
-            TDFConnections.DisconnectFromTDF();
-            Thread.Sleep(1000);
-            TDFGlobals.symbols.Clear();
-            TDFGlobals.financialResults.Clear();
-            //ConnectToTDF();
-            TDFConnections.ConnectToTDF(TDFGlobals.ServerID);
-
-            resetting = false;
-            if (TDFGlobals.TRConnected == true)
-            {
-                resetComplete = true;
-                if (resetTime)
-                    disconnectTime = disconnectTime.AddDays(1);
-                refTime = refTime.AddDays(1);
-                timer1.Enabled = true;
-                log.Debug("Reset complete");
-            }
-            else
-            {
-                if (resetFlag == false)
-                {
-                    resetFlag = true;
-                    string msg = "[" + DateTime.Now + "] TDFDow30 reset error. Failed to reconnect after timed disconnect.";
-                    SendEmail(msg);
-                    log.Debug("TDFDow30 reset error. Failed to reconnect after timed disconnect.");
-                }
-            }
-        }
-
+        
         public void UnsubscribeAll()
         {
             foreach (symbolData sd in TDFGlobals.symbols)
@@ -1891,7 +1774,6 @@ namespace TDFDow30
 
         public void UpdateZipperDataFile()
         {
-
             try
             {
                 XmlWriter xmlWriter = XmlWriter.Create(zipperFilePath + "ZipperDataFile.xml");
@@ -1935,10 +1817,8 @@ namespace TDFDow30
 
                     xmlWriter.WriteEndElement();
                 }
-
                 xmlWriter.WriteEndDocument();
                 xmlWriter.Close();
-
             }
             catch
             {
@@ -1950,9 +1830,7 @@ namespace TDFDow30
                     zipperEmailSent = DateTime.Now;
                     log.Debug("TDFDow30 write error. Error writing to Zipper Data File.");
                 }
-
             }
-            
         }
 
         
@@ -1960,10 +1838,10 @@ namespace TDFDow30
         {
             if (timerFlag == false)
             {
-                timer1.Enabled = false;
+                //timer1.Enabled = false;
                 timerFlag = true;
                 string msg = "[" + DateTime.Now + "] TDFDow30 response error. Data requested with no response.";
-                SendEmail(msg);
+                //SendEmail(msg);
                 timerEmailSent = DateTime.Now;
                 TDFConnections.DisconnectFromTDF();
                 ResetTimer.Enabled = true;
@@ -1976,7 +1854,6 @@ namespace TDFDow30
         {
             ResetTimer.Enabled = false;
             log.Debug("Reset Timer fired.");
-            //ResetTDFConnection(false);
             TDFConnections.ServerReset(false);
             timer1.Enabled = true;
         }

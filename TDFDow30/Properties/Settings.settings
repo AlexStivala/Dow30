@@ -25,7 +25,7 @@
       <Value Profile="(Default)">03:45:00</Value>
     </Setting>
     <Setting Name="dbTableName" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">X20FinancialData</Value>
+      <Value Profile="(Default)">X20FinancialDataDev</Value>
     </Setting>
     <Setting Name="Dynamic" Type="System.Boolean" Scope="Application">
       <Value Profile="(Default)">False</Value>
@@ -46,10 +46,10 @@
       <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="chartTableName" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">X20ChartData</Value>
+      <Value Profile="(Default)">X20ChartDataDev</Value>
     </Setting>
     <Setting Name="spUpdateChart" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">sp_Insert_ChartData</Value>
+      <Value Profile="(Default)">sp_Insert_ChartDataDev</Value>
     </Setting>
     <Setting Name="TDFServer_ID" Type="System.Int32" Scope="Application">
       <Value Profile="(Default)">1</Value>

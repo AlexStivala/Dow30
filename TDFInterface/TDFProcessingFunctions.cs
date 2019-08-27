@@ -18,7 +18,7 @@ namespace TDFInterface
         
         public static string XMLStr = "";
         public static XmlDocument xmlResponse = new XmlDocument();
-        public pageData marketPage = new pageData();
+        public static pageData marketPage = new pageData();
         public static Chart_Data ch = new Chart_Data();
         public static SendBuf sendBuf;
         public static List<Chart_Data> charts = new List<Chart_Data>();
@@ -171,7 +171,7 @@ namespace TDFInterface
         }
 
         // Process Market Pulse Pages
-        public pageData ProcessMarketPages(PreProXML marketPage)
+        public static pageData ProcessMarketPages(PreProXML marketPage)
         {
             XmlDocument mpData = new XmlDocument();
             pageData marketPageData = new pageData();
@@ -306,7 +306,7 @@ namespace TDFInterface
         }
 
         // Process Business Pulse Pages
-        public pageData ProcessBusinessPages(PreProXML marketPage)
+        public static pageData ProcessBusinessPages(PreProXML marketPage)
         {
             XmlDocument mpData = new XmlDocument();
             pageData marketPageData = new pageData();
@@ -991,7 +991,7 @@ namespace TDFInterface
 
         #region TDF Processing functions
 
-        public void TDFDataReceived(AsyncClientSocket.ClientSocket sender, byte[] data)
+        public static void TDFDataReceived(AsyncClientSocket.ClientSocket sender, byte[] data)
         {
             try
             {
@@ -1144,7 +1144,8 @@ namespace TDFInterface
                                         break;
 
                                     case TDFconstants.SUBSCRIPTION_RESPONSE:
-                                        TDFproc.ProcessFinancialData(TRmessage);
+                                        //TDFproc.ProcessFinancialData(TRmessage);
+                                        ProcessFinancialData(TRmessage);
                                         TDFGlobals.TRdata.RemoveRange(0, TRmessage.itf_Header.msgSize + 1);
                                         TDFGlobals.dataLeft = TDFGlobals.TRdata.Count;
                                         break;
@@ -1173,12 +1174,14 @@ namespace TDFInterface
                                                 break;
 
                                             case XMLTypes.marketPages:
-                                                marketPage = TDFproc.ProcessMarketPages(xmlData);
+                                                //marketPage = TDFproc.ProcessMarketPages(xmlData);
+                                                marketPage = ProcessMarketPages(xmlData);
                                                 TDFGlobals.pageDataFlag = true;
                                                 break;
 
                                             case XMLTypes.bpPages:
-                                                marketPage = TDFproc.ProcessBusinessPages(xmlData);
+                                                //marketPage = TDFproc.ProcessBusinessPages(xmlData);
+                                                marketPage = ProcessBusinessPages(xmlData);
                                                 TDFGlobals.pageDataFlag = true;
                                                 break;
                                         }
@@ -1213,16 +1216,26 @@ namespace TDFInterface
                                 TRmessage = itfHeaderAccess.ParseItfMessage(TDFGlobals.TRdata.ToArray());
                             else
                             {
-                                log.Error("--- Sync byte not found!");
+                                TDFGlobals.TRdata.Clear();
+                                waitForData = false;
+                                TDFGlobals.dataLeft = 0;
 
-                                int n = 0;
-                                while (TDFGlobals.TRdata[0] != 2 && TDFGlobals.TRdata.Count > 0)
+                                /*
+                                if (TDFGlobals.TRdata.Count > 0)
                                 {
-                                    TDFGlobals.TRdata.RemoveRange(0, 1);
-                                    n++;
-                                }
+                                    log.Error("--- Sync byte not found!");
 
-                                log.Debug($"--- {n} Bytes removed!");
+                                    int n = 0;
+                                    while (TDFGlobals.TRdata[0] != 2 && TDFGlobals.TRdata.Count > 0)
+                                    {
+                                        TDFGlobals.TRdata.RemoveRange(0, 1);
+                                        n++;
+                                    }
+
+                                    log.Debug($"--- {n} Bytes removed!");
+                                }
+                                */
+
                             }
                         }
                     }
@@ -1509,7 +1522,7 @@ namespace TDFInterface
             sendBuf(outputbuf);
         }
 
-        public void ProcessFinancialData(itf_Parser_Return_Message TRmess)
+        public static void ProcessFinancialData(itf_Parser_Return_Message TRmess)
         {
             //byte[] rData = new byte[TRmess.Message.Count];
             byte[] rData = TRmess.Message.ToArray();
@@ -1890,6 +1903,7 @@ namespace TDFInterface
             try
             {
                 // monitored fields
+                TDFGlobals.starredFields.Clear();
                 TDFGlobals.starredFields.Add("isiErrCode"); // 0
                 TDFGlobals.starredFields.Add("errMsg"); // 1
                 TDFGlobals.starredFields.Add("sectyType"); // 2
@@ -1928,7 +1942,6 @@ namespace TDFInterface
                 TDFGlobals.starredFields.Add("prcFmtCode"); // 35
                 TDFGlobals.starredFields.Add("issuerName"); // 36
                 TDFGlobals.starredFields.Add("ysetPrc"); // 37
-
 
                 // Initialize catalog array
                 for (int i = 0; i < 150; i++)
