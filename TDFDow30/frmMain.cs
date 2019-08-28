@@ -192,6 +192,7 @@ namespace TDFDow30
         public frmMain()
         {
             InitializeComponent();
+            TDFConnections.ReconnectTimerInit();
         }
 
         // public event EventHandler<SymbolUpdateEventArgs> SymbolDataUpdated;

@@ -41,8 +41,15 @@ namespace TDFInterface
         #endregion
 
 
-        public TDFConnections()
+        //public TDFConnections()
+       // {
+         //   ReconnectTimer.Elapsed += new ElapsedEventHandler(ReconnectTimer_Tick);
+        //}
+
+        public static void ReconnectTimerInit()
         {
+            ReconnectTimer.Enabled = false;
+            ReconnectTimer.Interval = 120000;
             ReconnectTimer.Elapsed += new ElapsedEventHandler(ReconnectTimer_Tick);
         }
 
