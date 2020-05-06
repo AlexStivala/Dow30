@@ -192,48 +192,9 @@ namespace TDFDow30
         public frmMain()
         {
             InitializeComponent();
-            TDFConnections.ReconnectTimerInit();
-        }
-
-        // public event EventHandler<SymbolUpdateEventArgs> SymbolDataUpdated;
-
-        //public event EventHandler<ChartLiveUpdateEventArgs> ChartDataUpdated;
-        //public event EventHandler<XMLUpdateEventArgs> XMLDataUpdated;
-        //public event EventHandler<ChartClosedEventArgs> ChartClosed;
-
-        //protected virtual void OnSymbolDataUpdated(SymbolUpdateEventArgs e)
-        //{
-
-        //    EventHandler<SymbolUpdateEventArgs> evntH = SymbolDataUpdated;
-        //    if (evntH != null)
-        //        evntH(this, e);
-
-
-        //    //SymbolDataUpdated?.Invoke(this, e);
-        //}
-        /*
-        protected virtual void OnChartDataUpdated(ChartLiveUpdateEventArgs e)
-        {
-
-            EventHandler<ChartLiveUpdateEventArgs> evntH = ChartDataUpdated;
-            if (evntH != null)
-                evntH(this, e);
-
-            //ChartDataUpdated?.Invoke(this, e);
         }
 
         
-        protected virtual void OnXMLDataUpdated(XMLUpdateEventArgs e)
-        {
-
-            EventHandler<XMLUpdateEventArgs> evntH = XMLDataUpdated;
-            if (evntH != null)
-                evntH(this, e);
-
-        }
-        */
-
-
         private void frmMain_Load(object sender, EventArgs e)
         {
             try
@@ -244,8 +205,6 @@ namespace TDFDow30
                 string hostName = HostIPNameFunctions.GetHostName(hostIpAddress);
                 lblIpAddress.Text = hostIpAddress;
                 lblHostName.Text = hostName;
-
-
 
                 IPAddress = Properties.Settings.Default.TDF_IPAddress;
                 Port = Properties.Settings.Default.TDF_Port;
@@ -278,10 +237,6 @@ namespace TDFDow30
 
                 TDFGlobals.showAllFields = false;
 
-                TDFProcessingFunctions.InitializeSymbolFields();
-                ServerResetLabel.Text = $"Next Server Reset: {TDFConnections.nextServerReset}";
-                DailyResetLabel.Text = $"Next Daily Reset: {TDFConnections.nextDailyReset}";
-
                 
                 string cmd = $"SELECT * FROM MarketHolidays";
                 marketHolidays = Dow30Database.Dow30DB.GetHolidays(cmd, dbConn);
@@ -298,19 +253,29 @@ namespace TDFDow30
                 log.Debug($"\r\n\r\n*********** Starting TDFDow30 v{version} **********\r\n");
 
                 chartCnt = (Int16)(chartInterval - 3);
-                TDFConnections.ConnectToTDF(TDFGlobals.ServerID);
+                //TDFConnections.ConnectToTDF(TDFGlobals.ServerID);
+
+
+                TDFConnections.TDFSetup();
+
                 if (TDFGlobals.TRConnected == true)
                 {
                     pictureBox2.Visible = true;
                 }
                 lblLogResp.Text = TDFGlobals.logResp;
 
+                //TDFProcessingFunctions.InitializeSymbolFields();
+                ServerResetLabel.Text = $"Next Server Reset: {TDFConnections.nextServerReset}";
+                DailyResetLabel.Text = $"Next Daily Reset: {TDFConnections.nextDailyReset}";
+
+                //TDFConnections.nextDailyReset = DateTime.Now.AddMinutes(5);
+
+
                 InitializeDow30Data();
                 TODTimer.Enabled = true;
                 //ResetTimer.Enabled = true;
 
-                //TDFConnections.nextDailyReset = DateTime.Now.AddMinutes(5);
-
+                
             }
             catch (Exception ex)
             {
@@ -1632,6 +1597,8 @@ namespace TDFDow30
                 }
 
                 marketIsOpen = true;
+                dataReset = false;
+
                 chartCnt++;
 
                 if (chartCnt == chartInterval)
@@ -1683,6 +1650,8 @@ namespace TDFDow30
                 
                 MarketModel.ServerReset sr = MarketFunctions.GetServerResetSched(TDFGlobals.ServerID);
                 TDFConnections.nextDailyReset = TDFConnections.GetNextDailyResetTime(sr);
+                //TDFConnections.nextDailyReset = DateTime.Now.AddMinutes(5);
+
                 DailyResetLabel.Text = $"Next Daily Reset: {TDFConnections.nextDailyReset}";
 
                 Thread.Sleep(200);
@@ -1692,8 +1661,7 @@ namespace TDFDow30
                 InitializeDow30Data();
                 timer1.Enabled = true;
                 resetting = false;
-                //TDFConnections.nextDailyReset = DateTime.Now.AddMinutes(5);
-
+                
             }
 
             if (zipperFlag == true && DateTime.Now > zipperEmailSent.AddDays(1))

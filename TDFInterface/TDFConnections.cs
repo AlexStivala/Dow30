@@ -53,6 +53,21 @@ namespace TDFInterface
             ReconnectTimer.Elapsed += new ElapsedEventHandler(ReconnectTimer_Tick);
         }
 
+        public static void SetupTDFSocket(int serverId)
+        {
+            MarketModel.ServerReset sr = MarketFunctions.GetServerResetSched(serverId);
+
+            // Instantiate and setup the client sockets
+            // Establish the remote endpoints for the sockets
+            System.Net.IPAddress TRIpAddress = System.Net.IPAddress.Parse(sr.IPAddress);
+            TDFGlobals.TRClientSocket = new AsyncClientSocket.ClientSocket(TRIpAddress, Convert.ToInt32(sr.Port));
+
+            // Initialize event handlers for the sockets
+            TDFGlobals.TRClientSocket.DataReceived += TRDataReceived;
+            TDFGlobals.TRClientSocket.ConnectionStatusChanged += TRConnectionStatusChanged;
+
+        }
+
 
         public static void ConnectToTDF(int serverId)
         {
@@ -63,10 +78,11 @@ namespace TDFInterface
             try
             {
                 ItfHeaderAccess itfHeaderAccess = new ItfHeaderAccess();
-                TDFProcessingFunctions.sendBuf += new SendBuf(TRSendCommand);
+                //TDFProcessingFunctions.sendBuf += new SendBuf(TRSendCommand);
 
                 MarketModel.ServerReset sr = MarketFunctions.GetServerResetSched(serverId);
 
+                /*
                 // Instantiate and setup the client sockets
                 // Establish the remote endpoints for the sockets
                 System.Net.IPAddress TRIpAddress = System.Net.IPAddress.Parse(sr.IPAddress);
@@ -75,6 +91,7 @@ namespace TDFInterface
                 // Initialize event handlers for the sockets
                 TDFGlobals.TRClientSocket.DataReceived += TRDataReceived;
                 TDFGlobals.TRClientSocket.ConnectionStatusChanged += TRConnectionStatusChanged;
+                */
 
                 // Connect to the TRClientSocket; call-backs for connection status will indicate status of client sockets
                 TDFGlobals.TRClientSocket.AutoReconnect = false;
@@ -357,6 +374,11 @@ namespace TDFInterface
         public static void TDFSetup()
         {
             TDFProcessingFunctions.InitializeSymbolFields();
+            MarketFunctions.marketHolidays = MarketFunctions.GetMarketHolidays();
+            ReconnectTimerInit();
+            TDFProcessingFunctions.sendBuf += new SendBuf(TRSendCommand);
+            SetupTDFSocket(TDFGlobals.ServerID);
+
             ConnectToTDF(TDFGlobals.ServerID);
             Thread.Sleep(2000);
             log.Info("Setup complete");
