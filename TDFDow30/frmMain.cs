@@ -102,6 +102,8 @@ namespace TDFDow30
         public bool timerFlag = false;
         public bool resetFlag = false;
         public bool zipperFlag = false;
+        public int zipperCnt = 0;
+        public bool zipperOKFlag = true;
         public string spName = "";
         public DateTime timerEmailSent = DateTime.Now.AddDays(-1);
         public DateTime zipperEmailSent = DateTime.Now.AddDays(-1);
@@ -1175,6 +1177,21 @@ namespace TDFDow30
                 if (dynamic == false && TDFGlobals.TRConnected && !resetting)
                 {
                     GetDow30Data();
+                    bool first = true;
+                    foreach (Dow30Database.Dow30DB.Dow30symbolData sd in Dow30Data)
+                    {
+                        //TDFGlobals.Dow30symbols.Add(sd.SubscribeSymbol);
+                        if (first == false)
+                        {
+                            symbolListStr += ", " + sd.SubscribeSymbol;
+                        }
+                        else
+                        {
+                            //symbolListStr += sd.SubscribeSymbol;
+                            symbolListStr = sd.SubscribeSymbol;
+                            first = false;
+                        }
+                    }
                     Thread.Sleep(50);
                 }
 
@@ -1664,12 +1681,14 @@ namespace TDFDow30
                 
             }
 
-            if (zipperFlag == true && DateTime.Now > zipperEmailSent.AddDays(1))
+            //if (zipperFlag == true && DateTime.Now > zipperEmailSent.AddDays(1))
+                //zipperFlag = false;
+            if (zipperFlag == true && DateTime.Now > zipperEmailSent.AddHours(6))
                 zipperFlag = false;
 
         }
 
-        
+
         public void UnsubscribeAll()
         {
             foreach (symbolData sd in TDFGlobals.symbols)
@@ -1788,16 +1807,29 @@ namespace TDFDow30
                 }
                 xmlWriter.WriteEndDocument();
                 xmlWriter.Close();
+                if (zipperFlag && !zipperOKFlag)
+                {
+                    zipperOKFlag = true;
+                    string msg = "[" + DateTime.Now + "] TDFDow30 write to Zipper Data File OK.";
+                    SendEmail(msg);
+                    log.Debug("TDFDow30 write to Zipper Data File OK.");
+                }
             }
-            catch
+            catch (Exception ex)
             {
                 if (zipperFlag == false)
                 {
-                    zipperFlag = true;
-                    string msg = "[" + DateTime.Now + "] TDFDow30 write error. Error writing to Zipper Data File.";
-                    SendEmail(msg);
-                    zipperEmailSent = DateTime.Now;
-                    log.Debug("TDFDow30 write error. Error writing to Zipper Data File.");
+                    zipperCnt++;
+                    if (zipperCnt == 5)
+                    {
+                        zipperFlag = true;
+                        zipperOKFlag = false;
+                        string msg = "[" + DateTime.Now + "] TDFDow30 write error. Error writing to Zipper Data File.";
+                        SendEmail(msg);
+                        zipperEmailSent = DateTime.Now;
+                        log.Debug("TDFDow30 write error. Error writing to Zipper Data File.");
+                        log.Debug(ex);
+                    }
                 }
             }
         }
