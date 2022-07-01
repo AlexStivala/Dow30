@@ -1177,21 +1177,6 @@ namespace TDFDow30
                 if (dynamic == false && TDFGlobals.TRConnected && !resetting)
                 {
                     GetDow30Data();
-                    bool first = true;
-                    foreach (Dow30Database.Dow30DB.Dow30symbolData sd in Dow30Data)
-                    {
-                        //TDFGlobals.Dow30symbols.Add(sd.SubscribeSymbol);
-                        if (first == false)
-                        {
-                            symbolListStr += ", " + sd.SubscribeSymbol;
-                        }
-                        else
-                        {
-                            //symbolListStr += sd.SubscribeSymbol;
-                            symbolListStr = sd.SubscribeSymbol;
-                            first = false;
-                        }
-                    }
                     Thread.Sleep(50);
                 }
 
@@ -1257,6 +1242,24 @@ namespace TDFDow30
                     }
                     if (updateZipperFile)
                         UpdateZipperDataFile();
+
+                    bool first = true;
+                    foreach (Dow30Database.Dow30DB.Dow30symbolData sd in Dow30Data)
+                    {
+                        //TDFGlobals.Dow30symbols.Add(sd.SubscribeSymbol);
+                        if (first == false)
+                        {
+                            symbolListStr += ", " + sd.SubscribeSymbol;
+                        }
+                        else
+                        {
+                            //symbolListStr += sd.SubscribeSymbol;
+                            symbolListStr = sd.SubscribeSymbol;
+                            first = false;
+                        }
+                    }
+
+
                     //label1.Text = $"Elapsed: {ts.TotalMilliseconds.ToString()} msec";
                 }
             }
